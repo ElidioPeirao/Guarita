@@ -11,153 +11,152 @@
         .view {
             display: none; /* Todas as telas começam escondidas */
         }
-        #auth-view {
+        #loading-view {
             display: flex; /* A tela de loading é a primeira */
         }
-        /* Força a câmera a estar escondida no início */
-        #camera-view {
-            display: none;
-        }
-        /* Classe para forçar a proporção do vídeo da câmera */
+        /* Correção para vídeo no iOS/Safari */
         video {
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
             width: 100%;
-            height: auto;
-            max-height: 70vh;
-            transform: scaleX(-1); /* Espelha a câmera (selfie) */
             border-radius: 0.75rem; /* rounded-xl */
         }
     </style>
 </head>
-<body class="bg-slate-100 font-sans antialiased flex items-center justify-center min-h-screen p-4">
+<body class="bg-slate-900 font-sans antialiased flex items-center justify-center min-h-screen p-4">
 
-    <!-- Container Principal - Agora é um "cartão" centralizado -->
+    <!-- Container Principal - "cartão" centralizado -->
     <div class="container mx-auto max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden">
-        
-        <!-- O padding foi movido para dentro de cada view para melhor controle -->
 
-        <!-- 1. Tela de Autenticação / Carregamento -->
-        <div id="auth-view" class="view flex-col items-center justify-center p-10">
-            <h1 class="text-3xl font-bold text-gray-800">Controle da Guarita</h1>
-            <p class="text-gray-500 mt-4" id="auth-status">Autenticando...</p>
-            <!-- Ícone de carregamento -->
+        <!-- 1. Tela de Carregamento Inicial -->
+        <div id="loading-view" class="view flex-col items-center justify-center p-10">
+            <h1 class="text-3xl font-bold text-gray-800">Guarita</h1>
+            <p class="text-gray-500 mt-4" id="auth-status">Conectando ao sistema...</p>
             <svg class="animate-spin h-8 w-8 text-indigo-600 mt-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
         </div>
 
-        <!-- 2. Tela de Busca (Guarita) - Tela Principal -->
+        <!-- 2. Tela de Busca (Principal da Guarita) -->
         <div id="search-view" class="view p-6 md:p-8">
             <header class="flex flex-col items-center mb-6 text-center">
-                <svg class="w-12 h-12 text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12 12 0 0012 21.054a12 12 0 008.618-15.069z"></path></svg>
-                <h1 class="text-3xl font-bold text-gray-800 w-full">Verificar Acesso</h1>
+                <svg class="w-12 h-12 text-indigo-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.623 0-1.334-.142-2.633-.402-3.896A11.959 11.959 0 0118 6c.266 0 .528.018.79.052A12.001 12.001 0 0012 2.75a11.96 11.96 0 00-1.42.186z" />
+                </svg>
+                <h1 class="text-3xl font-bold text-gray-800">Verificar Acesso</h1>
             </header>
-            <div class="mb-4">
-                <input type="text" id="search-input" placeholder="Digite o nome do funcionário..." class="w-full p-4 border border-gray-200 rounded-xl shadow-sm text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <!-- Spinner de carregamento da busca -->
-            <div id="search-loading" class="text-center p-4 text-gray-500" style="display: none;">
-                <svg class="animate-spin h-6 w-6 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            
+            <div class="relative mb-4">
+                <input type="text" id="search-input" class="w-full border-2 border-indigo-200 rounded-xl p-4 pl-12 text-lg focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none" placeholder="Buscar por nome...">
+                <svg class="w-6 h-6 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
             </div>
-            <!-- Resultados da Busca -->
-            <div id="search-results" class="flex flex-col space-y-3 mt-4">
-                <!-- Resultados serão injetados aqui via JS -->
+            
+            <div id="search-results" class="space-y-2 max-h-80 overflow-y-auto">
+                <!-- Resultados da busca aparecem aqui -->
             </div>
         </div>
 
         <!-- 3. Tela de Perfil do Funcionário -->
-        <div id="profile-view" class="view p-6 md:p-8">
-            <header class="flex items-center mb-4">
-                <button id="profile-back-btn" class="mr-3 p-2 rounded-full hover:bg-slate-200 transition-colors">
+        <div id="profile-view" class="view">
+            <header class="flex items-center p-4 border-b border-gray-200">
+                <button id="back-to-search-btn" class="p-2 rounded-full hover:bg-slate-200 transition-colors">
                     <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
-                <h1 class="text-2xl font-bold text-gray-800">Perfil do Funcionário</h1>
+                <h2 class="text-xl font-bold text-gray-800 text-center flex-1">Perfil do Funcionário</h2>
             </header>
             
-            <!-- Aviso de Status (O MAIS IMPORTANTE) -->
-            <div id="profile-status-banner" class="p-4 rounded-xl text-center mb-5 text-2xl font-bold flex items-center justify-center space-x-2">
-                <!-- Conteúdo dinâmico (Autorizado/Não Autorizado) -->
-            </div>
-            
-            <!-- Foto e Ação da Câmera -->
-            <div class="flex flex-col items-center mb-6">
-                <img id="profile-photo" src="https://placehold.co/200x200/e0e0e0/707070?text=Sem+Foto" alt="Foto do Funcionário" class="w-48 h-48 object-cover rounded-full shadow-lg border-4 border-slate-100 mb-3">
-                <button id="show-camera-btn" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition-colors hidden font-semibold">
-                    <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    Tirar Foto
-                </button>
-            </div>
-
-            <!-- Dados do Perfil -->
-            <div class="bg-slate-50 p-6 rounded-xl space-y-4">
-                <div class="border-b border-slate-200 pb-3">
-                    <span class="text-sm font-medium text-gray-500 block">Nome Completo:</span>
-                    <span id="profile-nome" class="text-lg font-semibold text-gray-900"></span>
-                </div>
-                <div class="border-b border-slate-200 pb-3">
-                    <span class="text-sm font-medium text-gray-500 block">Empresa (Terceirizada):</span>
-                    <span id="profile-empresa" class="text-lg font-semibold text-gray-900"></span>
-                </div>
-                <div class="border-b border-slate-200 pb-3">
-                    <span class="text-sm font-medium text-gray-500 block">Unidade:</span>
-                    <span id="profile-unidade" class="text-lg font-semibold text-gray-900"></span>
-                </div>
-                <div class="border-b border-slate-200 pb-3">
-                    <span class="text-sm font-medium text-gray-500 block">Serviço:</span>
-                    <span id="profile-servico" class="text-lg font-semibold text-gray-900"></span>
-                </div>
-                <div class="border-b border-slate-200 pb-3">
-                    <span class="text-sm font-medium text-gray-500 block">Data Início Serviço:</span>
-                    <span id="profile-data-inicio" class="text-lg font-semibold text-gray-900"></span>
-                </div>
-                
-                <div class="border-b border-slate-200 pb-3">
-                    <span class="text-sm font-medium text-gray-500 block">Data Emissão FAP:</span>
-                    <span id="profile-data-emissao-fap" class="text-lg font-semibold text-gray-900"></span>
-                </div>
-                <div class="border-b border-slate-200 pb-3">
-                    <span class="text-sm font-medium text-gray-500 block">Data Limite FAP (60d):</span>
-                    <span id="profile-data-limite-fap" class="text-lg font-semibold text-gray-900"></span>
+            <!-- Conteúdo do Perfil -->
+            <div class="p-6 md:p-8">
+                <!-- Banner de Status -->
+                <div id="profile-status-banner" class="rounded-xl p-6 mb-6 text-center shadow-lg">
+                    <!-- Conteúdo preenchido por JS -->
                 </div>
 
-                <!-- Dados do Solicitante -->
-                <div class="border-b border-slate-200 pb-3">
-                    <span class="text-sm font-medium text-gray-500 block">Solicitante:</span>
-                    <span id="profile-solicitante" class="text-lg font-semibold text-gray-900"></span>
+                <!-- Foto e Ação -->
+                <div class="flex flex-col items-center mb-6">
+                    <img id="profile-photo" src="https://placehold.co/150x150/e0e0e0/707070?text=Sem+Foto" alt="Foto do Funcionário" class="w-36 h-36 rounded-full object-cover border-4 border-white shadow-md mb-4">
+                    <button id="profile-take-photo-btn" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 flex items-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span>Tirar Foto</span>
+                    </button>
+                    <p id="photo-status-text" class="text-sm text-gray-500 mt-2">Sem foto cadastrada.</p>
                 </div>
-                <div>
-                    <span class="text-sm font-medium text-gray-500 block">Telefone Solicitante:</span>
-                    <span id="profile-tel-solicitante" class="text-lg font-semibold text-gray-900"></span>
+
+                <!-- Detalhes do Perfil -->
+                <div class="space-y-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="block text-xs font-medium text-gray-500">Nome Completo</label>
+                        <p id="profile-nome" class="text-lg font-semibold text-gray-900"></p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="block text-xs font-medium text-gray-500">Empresa (Terceirizada)</label>
+                        <p id="profile-empresa" class="text-lg font-semibold text-gray-900"></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <label class="block text-xs font-medium text-gray-500">Unidade</label>
+                            <p id="profile-unidade" class="text-lg font-semibold text-gray-900"></p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <label class="block text-xs font-medium text-gray-500">Serviço</label>
+                            <p id="profile-servico" class="text-lg font-semibold text-gray-900"></p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="block text-xs font-medium text-gray-500">Data Início Serviço</label>
+                        <p id="profile-data-inicio" class="text-lg font-semibold text-gray-900"></p>
+                    </div>
+                    
+                    <!-- Datas FAP -->
+                    <div id="profile-fap-warning-box" class="hidden bg-red-100 p-4 rounded-xl border border-red-300 text-red-800 font-medium text-center">
+                        <p id="profile-fap-warning-text"></p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <label class="block text-xs font-medium text-gray-500">Emissão FAP</label>
+                            <p id="profile-data-emissao" class="text-lg font-semibold text-gray-900"></p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <label class="block text-xs font-medium text-gray-500">Limite FAP (60 dias)</label>
+                            <p id="profile-data-limite" class="text-lg font-semibold text-gray-900"></p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="block text-xs font-medium text-gray-500">Solicitante / Telefone</label>
+                        <p id="profile-solicitante" class="text-lg font-semibold text-gray-900"></p>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- 4. Tela da Câmera (Modal) -->
-        <div id="camera-view" class="view fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-50 p-4">
-            <h2 class="text-white text-2xl font-bold mb-4">Capturar Foto</h2>
-            <!-- removido 'autoplay' para evitar carregamento inicial -->
-            <video id="camera-video" playsinline></video>
-            <!-- Canvas escondido para processar a imagem -->
+        
+        <!-- 4. Tela da Câmera -->
+        <div id="camera-view" class="view p-6 md:p-8 bg-gray-800">
+            <h1 class="text-2xl font-bold text-white text-center mb-4">Capturar Foto</h1>
+            <!-- O elemento <video> precisa de 'playsinline' para funcionar em iPhones -->
+            <video id="camera-video" class="w-full rounded-xl" autoplay muted playsinline></video>
+            
+            <button id="capture-photo-btn" class="w-full mt-4 bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-green-700 transition duration-300">
+                Bater Foto
+            </button>
+            
+            <!-- NOVO BOTÃO DE INVERTER -->
+            <button id="flip-camera-btn" class="w-full mt-2 bg-gray-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-gray-600 transition duration-300">
+                Inverter Câmera
+            </button>
+            
+            <button id="cancel-camera-btn" class="w-full mt-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-red-700 transition duration-300">
+                Cancelar
+            </button>
+            
+            <!-- Canvas fica escondido, é usado para processar a imagem -->
             <canvas id="camera-canvas" class="hidden"></canvas>
-            
-            <div class="flex space-x-4 mt-6">
-                <button id="capture-btn" class="z-10 bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    <span>Capturar</span>
-                </button>
-                <button id="save-photo-btn" class="z-10 bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-green-700 transition-colors flex items-center space-x-2" style="display: none;">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    <span>Salvar Foto</span>
-                </button>
-                <button id="cancel-camera-btn" class="z-10 bg-red-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-red-700 transition-colors flex items-center space-x-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    <span>Cancelar</span>
-                </button>
-            </div>
         </div>
+
 
         <!-- 5. Caixa de Mensagem (Toast) -->
         <div id="message-box" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg text-white" style="display: none; z-index: 100;">
@@ -178,22 +177,25 @@
         import { 
             getFirestore, 
             collection, 
-            doc, 
-            getDoc, 
-            getDocs, 
-            updateDoc, 
+            doc,        
+            getDoc,     
+            updateDoc,  
+            onSnapshot, 
             query, 
             where,
-            setLogLevel // Para debug
+            orderBy,
+            startAt,
+            endAt,
+            setLogLevel
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { 
             getStorage, 
             ref, 
-            uploadBytes, 
+            uploadString, 
             getDownloadURL 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-
-        // Configuração do Firebase (usando a fornecida como fallback)
+        
+        // Configuração do Firebase
         const firebaseConfigFromUser = {
             apiKey: "AIzaSyA92NNgMIsIqa5tnxyzHuE6DZIVWG2odKg",
             authDomain: "guaritasenai-9f5dd.firebaseapp.com",
@@ -204,45 +206,45 @@
             measurementId: "G-0606Z0LF58"
         };
         
-        // --- Variáveis Globais do Firebase ---
-        const firebaseConfig = firebaseConfigFromUser; // Usando a config fixa
-            
-        // --- Variáveis Globais da Aplicação ---
+        // --- Variáveis Globais ---
+        const firebaseConfig = firebaseConfigFromUser; 
         let app, auth, db, storage;
         let userId = null;
         let funcionariosCollectionRef;
-        let currentProfileId = null; // ID do funcionário sendo visualizado/fotografado
-        let videoStream = null; // Para a câmera
-        let searchTimer; // Para o debounce da busca
-
+        let searchDebounceTimer;
+        let currentEmployeeId = null; // ID do funcionário sendo visto/fotografado
+        
+        // --- Variáveis da Câmera ---
+        const videoElement = document.getElementById('camera-video');
+        const canvasElement = document.getElementById('camera-canvas');
+        let videoStream; // Para guardar o stream da câmera
+        // NOVO: Define o modo da câmera (traseira por padrão)
+        let currentFacingMode = 'environment'; // 'environment' = traseira, 'user' = frontal
+        
         // --- Elementos do DOM ---
         const views = document.querySelectorAll('.view');
-        const authView = document.getElementById('auth-view');
-        const authStatus = document.getElementById('auth-status');
-        const searchView = document.getElementById('search-view');
-        const profileView = document.getElementById('profile-view');
-        const cameraView = document.getElementById('camera-view');
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
         
         // --- Funções Auxiliares ---
 
         /**
          * Exibe uma tela (view) e esconde as outras.
-         * @param {string} viewId O ID da tela a ser exibida.
          */
         function showView(viewId) {
-            views.forEach(view => {
-                view.style.display = (view.id === viewId) ? (viewId === 'auth-view' ? 'flex' : 'block') : 'none';
+             views.forEach(view => {
+                view.style.display = 'none';
             });
-            // Esconde a câmera se a view não for a câmera
-            if (viewId !== 'camera-view' && videoStream) {
-                stopCamera();
+            const viewToShow = document.getElementById(viewId);
+            if (viewToShow) {
+                viewToShow.style.display = 'block';
+            } else {
+                console.error("View não encontrada:", viewId);
             }
         }
 
         /**
          * Exibe uma mensagem flutuante (toast).
-         * @param {string} message A mensagem a ser exibida.
-         * @param {boolean} [isError=false] Se a mensagem é um erro (vermelho).
          */
         function showMessage(message, isError = false) {
             const messageBox = document.getElementById('message-box');
@@ -259,29 +261,15 @@
         }
 
         /**
-         * Formata datas YYYY-MM-DD para DD/MM/YYYY.
+         * Formata data de YYYY-MM-DD para DD/MM/YYYY
          */
-        function formatarData(dataString) {
-            if (!dataString) return 'N/A';
-            // Trata data vinda do input (YYYY-MM-DD)
-            const partes = dataString.split('-');
-            if (partes.length === 3) {
-                return `${partes[2]}/${partes[1]}/${partes[0]}`;
-            }
-            return dataString; // Retorna original se não for o formato esperado
-        }
-
-        /**
-         * Para a trilha de vídeo da câmera.
-         */
-        function stopCamera() {
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-                videoStream = null;
-                const videoEl = document.getElementById('camera-video');
-                if (videoEl) {
-                    videoEl.srcObject = null;
-                }
+        function formatarData(dataStr) {
+            if (!dataStr) return 'N/A';
+            try {
+                const [ano, mes, dia] = dataStr.split('-');
+                return `${dia}/${mes}/${ano}`;
+            } catch (e) {
+                return dataStr; // Retorna original se falhar
             }
         }
 
@@ -296,187 +284,204 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
                 storage = getStorage(app);
-                setLogLevel('Debug'); // Habilita logs do Firestore
-
-                // Define a referência da coleção APÓS inicializar o db
-                // *** ATUALIZAÇÃO: Lendo da coleção privada ***
-                const collectionPath = `funcionarios_terceirizados`;
-                console.log(`Usando coleção: ${collectionPath}`);
-                funcionariosCollectionRef = collection(db, collectionPath);
-
+                setLogLevel('Debug'); 
 
                 // Gerencia o estado da autenticação
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
                         console.log("Usuário autenticado:", userId);
-                        authStatus.textContent = "Autenticado. Carregando...";
                         
-                        setTimeout(() => {
-                            showView('search-view');
-                        }, 500);
+                        // Caminho da coleção (NÃO PÚBLICO)
+                        const collectionPath = `funcionarios_terceirizados`;
+                        console.log(`Usando coleção: ${collectionPath}`);
+                        funcionariosCollectionRef = collection(db, collectionPath);
+                        
+                        document.getElementById('auth-status').textContent = "Conectado. Carregando...";
+                        showView('search-view'); // Mostra a tela de busca
 
                     } else {
-                        console.log("Nenhum usuário. Tentando login...");
-                        authStatus.textContent = "Tentando autenticação...";
-                        await performLogin();
+                        // Se não estiver logado, tenta login anônimo
+                        console.log("Nenhum usuário. Tentando login anônimo...");
+                        document.getElementById('auth-status').textContent = "Autenticando...";
+                        try {
+                            await signInAnonymously(auth);
+                            // onAuthStateChanged será chamado novamente
+                        } catch (error) {
+                            console.error("Erro no login anônimo:", error);
+                            document.getElementById('auth-status').textContent = "Falha na autenticação.";
+                            showMessage("Falha grave de autenticação: " + error.message, true);
+                        }
                     }
                 });
 
             } catch (error) {
                 console.error("Erro na inicialização do Firebase:", error);
-                authStatus.textContent = "Erro crítico na inicialização.";
+                document.getElementById('auth-status').textContent = "Erro crítico na inicialização.";
                 showMessage("Erro ao conectar com Firebase: " + error.message, true);
             }
         }
 
-        /**
-         * Tenta o login anônimo.
-         */
-        async function performLogin() {
-            try {
-                console.log("Tentando login anônimo...");
-                await signInAnonymously(auth);
-            } catch (error) {
-                console.error("Erro na autenticação:", error);
-                authStatus.textContent = "Falha na autenticação.";
-                showMessage("Falha na autenticação: " + error.message, true);
-            }
-        }
-        
-        // --- Lógica de Navegação ---
-        document.getElementById('profile-back-btn').addEventListener('click', () => showView('search-view'));
-
         // --- Lógica de Busca ---
-        const searchInput = document.getElementById('search-input');
-        const searchResults = document.getElementById('search-results');
-        const searchLoading = document.getElementById('search-loading');
 
         searchInput.addEventListener('input', () => {
+            // Limpa o timer anterior
+            clearTimeout(searchDebounceTimer);
             
-            // Limpa o timer anterior a cada nova letra digitada
-            clearTimeout(searchTimer);
-
-            // Inicia um novo timer
-            searchTimer = setTimeout(async () => {
-            
-                // Toda a lógica de busca agora fica dentro do timer
+            // Cria um novo timer
+            searchDebounceTimer = setTimeout(() => {
                 const searchTerm = searchInput.value.trim().toLowerCase();
-                
-                if (searchTerm.length < 3) {
-                    searchResults.innerHTML = '';
-                    return;
-                }
-
-                searchLoading.style.display = 'block';
-                searchResults.innerHTML = ''; // Limpa resultados anteriores *antes* da nova busca
-
-                try {
-                    // Query para "começa com"
-                    const q = query(
-                        funcionariosCollectionRef,
-                        where('nomeCompletoLower', '>=', searchTerm),
-                        where('nomeCompletoLower', '<=', searchTerm + '\uf8ff')
-                    );
-
-                    const querySnapshot = await getDocs(q);
-                    
-                    if (querySnapshot.empty) {
-                        searchResults.innerHTML = '<p class="text-gray-500 text-center p-4">Nenhum funcionário encontrado.</p>';
-                    } else {
-                        querySnapshot.docs.forEach(doc => {
-                            const data = doc.data();
-                            const resultEl = document.createElement('div');
-                            resultEl.className = 'p-4 bg-white rounded-lg shadow-sm border border-gray-100 cursor-pointer hover:bg-indigo-50 hover:shadow-md transition-all';
-                            resultEl.innerHTML = `
-                                <h3 class="text-lg font-semibold text-indigo-700">${data.nomeCompleto}</h3>
-                                <p class="text-gray-600 text-sm">${data.empresa}</p>
-                            `;
-                            resultEl.dataset.id = doc.id; // Armazena o ID do documento
-                            resultEl.addEventListener('click', () => showProfile(doc.id));
-                            searchResults.appendChild(resultEl);
-                        });
-                    }
-                } catch (error) {
-                    console.error("Erro na busca:", error);
-                    showMessage("Erro ao buscar dados: " + error.message, true);
-                    searchResults.innerHTML = '<p class="text-red-500 text-center p-4">Erro ao buscar dados.</p>';
-                } finally {
-                    searchLoading.style.display = 'none';
-                }
+                performSearch(searchTerm);
             }, 300); // Espera 300ms após o usuário parar de digitar
         });
 
-        // --- Lógica de Exibição do Perfil ---
-        async function showProfile(docId) {
-            currentProfileId = docId; // Armazena o ID para a foto
-            const profileDocRef = doc(db, funcionariosCollectionRef.path, docId);
+        async function performSearch(searchTerm) {
+            if (searchTerm.length < 2) {
+                searchResults.innerHTML = ''; // Limpa se a busca for muito curta
+                return;
+            }
+
+            if (!funcionariosCollectionRef) {
+                showMessage("Aguarde, conectando ao banco de dados...", true);
+                return;
+            }
             
+            searchResults.innerHTML = '<p class="text-gray-500 text-center">Buscando...</p>';
+
             try {
-                const docSnap = await getDoc(profileDocRef);
+                // Query para buscar pelo campo `nomeCompletoLower`
+                const q = query(
+                    funcionariosCollectionRef,
+                    where("nomeCompletoLower", ">=", searchTerm),
+                    where("nomeCompletoLower", "<=", searchTerm + '\uf8ff') // \uf8ff é um caractere unicode que marca o fim da string
+                );
+
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    searchResults.innerHTML = '<p class="text-gray-500 text-center">Nenhum funcionário encontrado.</p>';
+                    return;
+                }
+
+                searchResults.innerHTML = ''; // Limpa os resultados antigos
+                
+                querySnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const el = document.createElement('div');
+                    el.className = 'p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-indigo-50 cursor-pointer transition-colors';
+                    el.innerHTML = `
+                        <h3 class="text-lg font-semibold text-indigo-700">${data.nomeCompleto}</h3>
+                        <p class="text-gray-600">${data.empresa}</p>
+                    `;
+                    el.addEventListener('click', () => showProfile(doc.id));
+                    searchResults.appendChild(el);
+                });
+
+            } catch (error) {
+                console.error("Erro na busca: ", error);
+                showMessage("Erro ao realizar a busca: " + error.message, true);
+                searchResults.innerHTML = '<p class="text-red-500 text-center">Erro ao buscar.</p>';
+            }
+        }
+        
+        // --- Lógica de Perfil ---
+        
+        document.getElementById('back-to-search-btn').addEventListener('click', () => {
+            searchInput.value = '';
+            searchResults.innerHTML = '';
+            showView('search-view');
+        });
+
+        async function showProfile(docId) {
+            currentEmployeeId = docId; // Salva o ID do funcionário atual
+            
+            if (!funcionariosCollectionRef) {
+                showMessage("Erro: Conexão com banco de dados perdida.", true);
+                return;
+            }
+
+            try {
+                const docRef = doc(db, funcionariosCollectionRef.path, docId);
+                const docSnap = await getDoc(docRef);
+
                 if (!docSnap.exists()) {
                     showMessage("Erro: Funcionário não encontrado.", true);
                     return;
                 }
-
+                
                 const data = docSnap.data();
-
-                // 1. Preenche os dados
+                
+                // Preenche os dados
                 document.getElementById('profile-nome').textContent = data.nomeCompleto || 'N/A';
                 document.getElementById('profile-empresa').textContent = data.empresa || 'N/A';
                 document.getElementById('profile-unidade').textContent = data.unidade || 'N/A';
                 document.getElementById('profile-servico').textContent = data.servico || 'N/A';
                 document.getElementById('profile-data-inicio').textContent = formatarData(data.dataInicioServico);
-                document.getElementById('profile-data-emissao-fap').textContent = formatarData(data.dataEmissaoFAP);
-                document.getElementById('profile-data-limite-fap').textContent = formatarData(data.dataLimiteFAP);
-                document.getElementById('profile-solicitante').textContent = data.solicitante || 'N/A';
-                document.getElementById('profile-tel-solicitante').textContent = data.telefoneSolicitante || 'N/A';
+                document.getElementById('profile-data-emissao').textContent = formatarData(data.dataEmissaoFAP);
+                document.getElementById('profile-data-limite').textContent = formatarData(data.dataLimiteFAP);
+                document.getElementById('profile-solicitante').textContent = `${data.solicitante || 'N/A'} / ${data.telefoneSolicitante || 'N/A'}`;
+                
+                // Atualiza a foto
+                const photoStatusText = document.getElementById('photo-status-text');
+                const profilePhoto = document.getElementById('profile-photo');
+                if (data.fotoUrl) {
+                    profilePhoto.src = data.fotoUrl;
+                    photoStatusText.textContent = "Foto cadastrada.";
+                    photoStatusText.className = "text-sm text-green-600 mt-2";
+                } else {
+                    profilePhoto.src = 'https://placehold.co/150x150/e0e0e0/707070?text=Sem+Foto';
+                    photoStatusText.textContent = "Sem foto cadastrada.";
+                    photoStatusText.className = "text-sm text-red-600 mt-2";
+                }
 
-                // 2. Lógica de Autorização (Principal)
-                const statusBanner = document.getElementById('profile-status-banner');
-                const limiteFAPEl = document.getElementById('profile-data-limite-fap');
-                limiteFAPEl.classList.remove('text-red-700', 'font-bold'); // Reseta estilo
- 
+                // Lógica de Status (Autorizado/Não Autorizado)
+                const banner = document.getElementById('profile-status-banner');
+                const fapWarningBox = document.getElementById('profile-fap-warning-box');
+                const fapWarningText = document.getElementById('profile-fap-warning-text');
+                fapWarningBox.style.display = 'none'; // Reseta o aviso
+                
+                let autorizado = true;
+                let mensagem = "";
                 let fapVencida = false;
-                let fapCadastrada = data.dataLimiteFAP ? true : false;
 
-                if (fapCadastrada) {
+                if (!data.dataLimiteFAP) {
+                    autorizado = false;
+                    mensagem = "Cadastro incompleto (FAP não registrada).";
+                } else {
                     const hoje = new Date();
+                    hoje.setHours(0, 0, 0, 0); // Zera a hora para comparar só a data
+                    
                     const dataLimite = new Date(data.dataLimiteFAP + "T00:00:00");
-                    hoje.setHours(0, 0, 0, 0); // Zera a hora de hoje para comparar só a data
-                    if (hoje > dataLimite) {
+                    
+                    if (dataLimite < hoje) {
+                        autorizado = false;
+                        mensagem = "FAP Vencida.";
                         fapVencida = true;
                     }
                 }
 
-                // Ícones para o banner
-                const iconCheck = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
-                const iconBlock = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>`;
-
-                if (!fapCadastrada) {
-                    statusBanner.innerHTML = `${iconBlock} <span>NÃO AUTORIZADO (FAP NÃO CADASTRADA)</span>`;
-                    statusBanner.className = "p-4 rounded-xl text-center mb-5 text-2xl font-bold flex items-center justify-center space-x-2 bg-red-100 text-red-800";
-                } else if (fapVencida) {
-                    statusBanner.innerHTML = `${iconBlock} <span>NÃO AUTORIZADO (FAP VENCIDA)</span>`;
-                    statusBanner.className = "p-4 rounded-xl text-center mb-5 text-2xl font-bold flex items-center justify-center space-x-2 bg-red-100 text-red-800";
-                    limiteFAPEl.classList.add('text-red-700', 'font-bold');
+                if (autorizado) {
+                    // AUTORIZADO
+                    banner.className = 'rounded-xl p-6 mb-6 text-center shadow-lg bg-green-100 text-green-800';
+                    banner.innerHTML = `
+                        <svg class="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <h2 class="text-3xl font-bold">AUTORIZADO</h2>
+                    `;
                 } else {
-                    statusBanner.innerHTML = `${iconCheck} <span>AUTORIZADO</span>`;
-                    statusBanner.className = "p-4 rounded-xl text-center mb-5 text-2xl font-bold flex items-center justify-center space-x-2 bg-green-100 text-green-800";
+                    // NÃO AUTORIZADO
+                    banner.className = 'rounded-xl p-6 mb-6 text-center shadow-lg bg-red-100 text-red-800';
+                    banner.innerHTML = `
+                        <svg class="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <h2 class="text-3xl font-bold">NÃO AUTORIZADO</h2>
+                        <p class="text-lg font-medium mt-1">${mensagem}</p>
+                    `;
+                    // Mostra aviso extra perto da data da FAP
+                    if (fapVencida) {
+                        fapWarningText.textContent = "FAP VENCIDA";
+                        fapWarningBox.style.display = 'block';
+                    }
                 }
-
-                // 4. Lógica da Foto
-                const photoEl = document.getElementById('profile-photo');
-                const cameraBtn = document.getElementById('show-camera-btn');
-                if (data.fotoUrl) {
-                    photoEl.src = data.fotoUrl;
-                    cameraBtn.style.display = 'none'; // Esconde o botão se já tem foto
-                } else {
-                    photoEl.src = "https://placehold.co/200x200/e0e0e0/707070?text=Sem+Foto";
-                    cameraBtn.style.display = 'block'; // Mostra o botão se não tem foto
-                }
-
-                // 5. Exibe o perfil
+                
                 showView('profile-view');
 
             } catch (error) {
@@ -484,113 +489,155 @@
                 showMessage("Erro ao carregar perfil: " + error.message, true);
             }
         }
-
+        
         // --- Lógica da Câmera ---
-        const videoEl = document.getElementById('camera-video');
-        const canvasEl = document.getElementById('camera-canvas');
-        const captureBtn = document.getElementById('capture-btn');
-        const savePhotoBtn = document.getElementById('save-photo-btn');
-        const cancelCameraBtn = document.getElementById('cancel-camera-btn');
 
-        // Abre a câmera
-        document.getElementById('show-camera-btn').addEventListener('click', async () => {
-            showView('camera-view');
-            captureBtn.style.display = 'flex'; // Mudado para flex
-            savePhotoBtn.style.display = 'none';
+        // NOVO: Função para PARAR o stream da câmera
+        function stopCameraStream() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => {
+                    track.stop(); // Para a trilha (desliga a luz da câmera)
+                });
+                videoStream = null;
+                videoElement.srcObject = null; // Limpa o elemento de vídeo
+                console.log("Stream da câmera parado.");
+            }
+        }
+
+        // NOVO: Função para INICIAR o stream da câmera
+        async function startCameraStream(facingMode) {
+            stopCameraStream(); // Para qualquer stream anterior
+            
+            const constraints = {
+                video: { 
+                    facingMode: { exact: facingMode }, // 'exact' força o modo
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            };
 
             try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user' }, // 'user' para selfie, 'environment' para traseira
-                    audio: false 
-                });
-                videoEl.srcObject = videoStream;
-                videoEl.play(); // Adiciona o play aqui, já que o autoplay foi removido
-            } catch (error) {
-                console.error("Erro ao acessar a câmera:", error);
-                showMessage("Não foi possível acessar a câmera. " + error.message, true);
-                showView('profile-view'); // Volta para o perfil
+                console.log(`Tentando iniciar câmera com facingMode: ${facingMode}`);
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement.srcObject = videoStream;
+                await videoElement.play(); // Espera o play
+                console.log("Câmera iniciada.");
+            } catch (err) {
+                console.error("Erro ao acessar a câmera: ", err);
+                
+                // Se falhou com 'exact', tenta sem (plano B)
+                if (err.name === 'OverconstrainedError' && facingMode === 'environment') {
+                    console.warn("Câmera traseira falhou, tentando câmera frontal...");
+                    currentFacingMode = 'user'; // Muda para o modo 'user'
+                    await startCameraStream('user'); // Tenta recursivamente com o outro modo
+                } else {
+                     showMessage(`Erro ao acessar câmera (${err.name}). Verifique permissões.`, true);
+                     stopCameraStream(); // Garante que tudo pare
+                     showView('profile-view'); // Volta ao perfil
+                }
             }
+        }
+        
+        // Botão "Tirar Foto" (do Perfil) - Abre a câmera
+        document.getElementById('profile-take-photo-btn').addEventListener('click', () => {
+            // currentEmployeeId já foi definido quando showProfile foi chamado
+            if (!currentEmployeeId) {
+                showMessage("Erro: ID do funcionário não encontrado.", true);
+                return;
+            }
+            showView('camera-view');
+            // Inicia a câmera com o modo atual (traseira por padrão)
+            startCameraStream(currentFacingMode); 
         });
 
-        // Tira a foto (desenha no canvas)
-        captureBtn.addEventListener('click', () => {
-            canvasEl.width = videoEl.videoWidth;
-            canvasEl.height = videoEl.videoHeight;
-            const context = canvasEl.getContext('2d');
-            
-            // Espelha o canvas se a câmera estiver espelhada (como no CSS)
-            context.translate(canvasEl.width, 0);
-            context.scale(-1, 1);
-            
-            context.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
-            
-            stopCamera(); // Para o vídeo
-            captureBtn.style.display = 'none';
-            savePhotoBtn.style.display = 'flex'; // Mudado para flex
-        });
-
-        // Salva a foto no Firebase
-        savePhotoBtn.addEventListener('click', () => {
-            savePhotoBtn.disabled = true;
-            savePhotoBtn.innerHTML = `
-                <svg class="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Salvando...</span>`;
-
-            canvasEl.toBlob(async (blob) => {
-                if (!currentProfileId) {
-                    showMessage("Erro: ID do perfil não encontrado.", true);
-                    return;
-                }
-                
-                const fotoRef = ref(storage, `fotos_funcionarios/${currentProfileId}.jpg`);
-                
-                try {
-                    // 1. Upload
-                    await uploadBytes(fotoRef, blob);
-                    
-                    // 2. Pega URL
-                    const downloadURL = await getDownloadURL(fotoRef);
-                    
-                    // 3. Atualiza o Firestore
-                    const profileDocRef = doc(db, funcionariosCollectionRef.path, currentProfileId);
-                    await updateDoc(profileDocRef, {
-                        fotoUrl: downloadURL
-                    });
-                    
-                    // 4. Atualiza a UI
-                    document.getElementById('profile-photo').src = downloadURL;
-                    document.getElementById('show-camera-btn').style.display = 'none';
-                    
-                    showMessage("Foto salva com sucesso!", false);
-                    showView('profile-view'); // Volta para o perfil
-
-                } catch (error) {
-                    console.error("Erro ao salvar foto:", error);
-                    showMessage("Erro ao salvar foto: " + error.message, true);
-                } finally {
-                    // Este é o bloco finally correto para o savePhotoBtn
-                    savePhotoBtn.disabled = false;
-                    savePhotoBtn.innerHTML = `
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Salvar Foto</span>`;
-                }
-
-            }, 'image/jpeg', 0.9);
-        });
-
-        // Cancela a câmera
-        cancelCameraBtn.addEventListener('click', () => {
-            stopCamera();
+        // Botão "Cancelar" (da Câmera)
+        document.getElementById('cancel-camera-btn').addEventListener('click', () => {
+            stopCameraStream(); // Para o stream
             showView('profile-view');
         });
+        
+        // NOVO: Botão "Inverter Câmera"
+        document.getElementById('flip-camera-btn').addEventListener('click', () => {
+            // Inverte o modo
+            currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
+            // Reinicia a câmera com o novo modo
+            startCameraStream(currentFacingMode);
+        });
+
+        // Botão "Bater Foto" (da Câmera)
+        document.getElementById('capture-photo-btn').addEventListener('click', () => {
+            const context = canvasElement.getContext('2d');
+            
+            // Define o tamanho do canvas para o tamanho do vídeo
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            
+            // Desenha o frame atual do vídeo no canvas
+            context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+            
+            // Converte o canvas para uma imagem (Base64)
+            // Usamos JPEG para economizar espaço
+            const photoDataUrl = canvasElement.toDataURL('image/jpeg', 0.8);
+            
+            // Para o stream da câmera AGORA
+            stopCameraStream(); 
+            
+            // Salva a foto
+            savePhoto(photoDataUrl);
+        });
+
+        // Função para salvar a foto no Firebase
+        async function savePhoto(dataUrl) {
+            if (!currentEmployeeId) {
+                showMessage("Erro fatal: ID do funcionário perdido.", true);
+                return;
+            }
+
+            const btn = document.getElementById('capture-photo-btn');
+            btn.disabled = true;
+            btn.textContent = "Salvando...";
+            
+            try {
+                // Caminho no Storage
+                const storagePath = `fotos_funcionarios/${currentEmployeeId}.jpg`;
+                const storageRef = ref(storage, storagePath);
+                
+                // Faz o upload da string Base64 (removendo o prefixo)
+                const uploadResult = await uploadString(storageRef, dataUrl, 'data_url');
+                console.log("Foto enviada:", uploadResult);
+
+                // Pega a URL de download
+                const downloadURL = await getDownloadURL(uploadResult.ref);
+                
+                // Atualiza o documento do funcionário no Firestore
+                const docRef = doc(db, funcionariosCollectionRef.path, currentEmployeeId);
+                await updateDoc(docRef, {
+                    fotoUrl: downloadURL
+                });
+
+                showMessage("Foto salva com sucesso!", false);
+                
+                // Recarrega o perfil para mostrar a nova foto
+                await showProfile(currentEmployeeId);
+                // A view já foi trocada pelo showProfile
+
+            } catch (error) {
+                console.error("Erro ao salvar foto:", error);
+                showMessage("Erro ao salvar foto: " + error.message, true);
+                showView('profile-view'); // Volta ao perfil mesmo se der erro
+            } finally {
+                // Não precisa parar o stream aqui, já foi parado ao bater a foto
+                btn.disabled = false;
+                btn.textContent = "Bater Foto";
+            }
+        }
 
         // --- Inicialização ---
-        // Espera o DOM carregar para iniciar o Firebase
         window.addEventListener('DOMContentLoaded', initializeAppLogic);
 
     </script>
 </body>
 </html>
+
+
