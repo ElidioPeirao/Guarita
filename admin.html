@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Acesso - Admin</title>
+    <!-- Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados */
+        .view {
+            display: none; /* Todas as telas começam escondidas */
+        }
+        #loading-view {
+            display: flex; /* A tela de loading é a primeira */
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans antialiased flex items-center justify-center min-h-screen p-4">
+
+    <!-- Container Principal - "cartão" centralizado -->
+    <!-- Aumentei o max-w-lg para max-w-2xl para caber os filtros -->
+    <div class="container mx-auto max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden">
+
+        <!-- 1. Tela de Carregamento Inicial -->
+        <div id="loading-view" class="view flex-col items-center justify-center p-10">
+            <h1 class="text-3xl font-bold text-gray-800">Admin - Guarita</h1>
+            <p class="text-gray-500 mt-4" id="auth-status">Verificando sessão...</p>
+            <svg class="animate-spin h-8 w-8 text-indigo-600 mt-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </div>
+
+        <!-- 2. Tela de Login -->
+        <div id="login-view" class="view p-6 md:p-8">
+            <header class="flex flex-col items-center mb-6 text-center">
+                <svg class="w-12 h-12 text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                <h1 class="text-3xl font-bold text-gray-800">Login do Administrador</h1>
+            </header>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="login-email" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700">Senha</label>
+                    <input type="password" id="login-password" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <button type="submit" id="login-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center">
+                    Entrar
+                </button>
+            </form>
+        </div>
+        
+        <!-- 3. Wrapper da Aplicação Principal (Visível após login) -->
+        <div id="main-app-wrapper" class="view w-full">
+            
+            <!-- Header do App -->
+            <header class="bg-slate-50 p-4 flex justify-between items-center border-b border-slate-200">
+                <h1 class="text-xl font-bold text-indigo-700">Painel Admin</h1>
+                <button id="logout-btn" class="text-sm text-red-600 hover:text-red-800 font-medium">Sair</button>
+            </header>
+
+            <!-- 3a. Tela de Lista de Funcionários -->
+            <div id="list-view" class="view p-6 md:p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Funcionários</h2>
+                    <!-- MODIFICAÇÃO: Wrapper e novo botão de exportar -->
+                    <div class="flex space-x-2">
+                        <button id="export-csv-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
+                            Exportar Tudo (CSV)
+                        </button>
+                        <button id="add-new-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition duration-300">
+                            Cadastrar Novo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FILTROS -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Filtrar por:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="filter-nome" class="block text-sm font-medium text-gray-700">Nome</label>
+                            <input type="text" id="filter-nome" placeholder="Digite um nome..." class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="filter-data-inicio" class="block text-sm font-medium text-gray-700">Data de Início do Serviço</label>
+                            <input type="date" id="filter-data-inicio" class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input id="filter-fap-vencida" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            <label for="filter-fap-vencida" class="ml-2 block text-sm font-medium text-gray-800">Mostrar apenas FAP vencidas</label>
+                        </div>
+                        <button id="clear-filters-btn" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Limpar Filtros</button>
+                    </div>
+                </div>
+                
+                <div id="employee-list-container" class="space-y-3 max-h-96 overflow-y-auto">
+                    <!-- Lista será preenchida pelo JS -->
+                </div>
+            </div>
+
+            <!-- 3b. Tela de Cadastro/Edição de Funcionário -->
+            <div id="edit-view" class="view p-6 md:p-8">
+                <header class="flex items-center mb-6">
+                    <button id="back-to-list-btn" class="mr-3 p-2 rounded-full hover:bg-slate-200 transition-colors">
+                        <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h1 id="edit-form-title" class="text-3xl font-bold text-gray-800">Cadastrar Funcionário</h1>
+                </header>
+                
+                <form id="edit-form" class="space-y-4">
+                    <!-- Campos do formulário (iguais ao anterior) -->
+                    <div>
+                        <label for="reg-nome" class="block text-sm font-medium text-gray-700">Nome Completo</label>
+                        <input type="text" id="reg-nome" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="reg-empresa" class="block text-sm font-medium text-gray-700">Empresa (Terceirizada)</label>
+                        <input type="text" id="reg-empresa" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="reg-unidade" class="block text-sm font-medium text-gray-700">Unidade</label>
+                        <input type="text" id="reg-unidade" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="reg-servico" class="block text-sm font-medium text-gray-700">Serviço</label>
+                        <input type="text" id="reg-servico" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="reg-data-inicio" class="block text-sm font-medium text-gray-700">Data Início Serviço</label>
+                        <input type="date" id="reg-data-inicio" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="reg-data-emissao-fap" class="block text-sm font-medium text-gray-700">Data Emissão FAP (Gera validade de 60 dias)</label>
+                        <input type="date" id="reg-data-emissao-fap" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="reg-solicitante" class="block text-sm font-medium text-gray-700">Solicitante</label>
+                        <input type="text" id="reg-solicitante" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="reg-tel-solicitante" class="block text-sm font-medium text-gray-700">Telefone Solicitante</label>
+                        <input type="tel" id="reg-tel-solicitante" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <button type="submit" id="save-register-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-green-700 transition duration-300 flex items-center justify-center space-x-2">
+                        <span>Salvar</span>
+                    </button>
+                </form>
+            </div>
+
+        </div> <!-- Fim do Main App Wrapper -->
+
+
+        <!-- 4. Caixa de Mensagem (Toast) -->
+        <div id="message-box" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg text-white" style="display: none; z-index: 100;">
+            <span id="message-text"></span>
+        </div>
+
+        <!-- 5. Modal de Confirmação de Exclusão -->
+        <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" style="display: none; z-index: 50;">
+            <div class="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Confirmar Exclusão</h2>
+                <p id="confirm-modal-text" class="text-gray-600 mb-6">Tem certeza que deseja apagar este funcionário?</p>
+                <div class="flex justify-end space-x-3">
+                    <button id="confirm-modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancelar</button>
+                    <button id="confirm-modal-delete-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Apagar</button>
+                </div>
+            </div>
+        </div>
+
+
+    </div> <!-- Fim do Container Principal -->
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Importações do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword, 
+            signOut,                    
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            doc,        
+            getDoc,     
+            getDocs,    
+            updateDoc,  
+            deleteDoc,  
+            onSnapshot, 
+            Timestamp,
+            query,         
+            where,         
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Configuração do Firebase
+        const firebaseConfigFromUser = {
+            apiKey: "AIzaSyA92NNgMIsIqa5tnxyzHuE6DZIVWG2odKg",
+            authDomain: "guaritasenai-9f5dd.firebaseapp.com",
+            projectId: "guaritasenai-9f5dd",
+            storageBucket: "guaritasenai-9f5dd.firebasestorage.app",
+            messagingSenderId: "343795654991",
+            appId: "1:343795654991:web:5780d957495bb07a17253a",
+            measurementId: "G-0606Z0LF58"
+        };
+        
+        // --- Variáveis Globais ---
+        const firebaseConfig = firebaseConfigFromUser; 
+        let app, auth, db;
+        let userId = null;
+        let funcionariosCollectionRef;
+        let currentEditingId = null; // Para saber se estamos editando ou criando
+        let currentDeletingId = null; // Para saber quem apagar
+        let unsubscribeFromList = null; // Para parar de ouvir a lista ao deslogar
+        
+        let allEmployees = []; // NOVO: Array para guardar todos os funcionários
+        
+        // --- Elementos do DOM ---
+        const views = document.querySelectorAll('.view');
+        const loadingView = document.getElementById('loading-view');
+        const loginView = document.getElementById('login-view');
+        const mainAppWrapper = document.getElementById('main-app-wrapper');
+        const listView = document.getElementById('list-view');
+        const editView = document.getElementById('edit-view');
+        const employeeListContainer = document.getElementById('employee-list-container');
+        const editForm = document.getElementById('edit-form');
+        const editFormTitle = document.getElementById('edit-form-title');
+        const confirmModal = document.getElementById('confirm-modal');
+        
+        // Elementos de Filtro
+        const filterNome = document.getElementById('filter-nome');
+        const filterDataInicio = document.getElementById('filter-data-inicio');
+        const filterFapVencida = document.getElementById('filter-fap-vencida');
+        const clearFiltersBtn = document.getElementById('clear-filters-btn');
+        // Botão de exportar
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+
+        
+        // --- Funções Auxiliares ---
+
+        /**
+         * Exibe uma tela (view) e esconde as outras.
+         */
+        function showView(viewId) {
+             views.forEach(view => {
+                view.style.display = 'none';
+            });
+            // Trata as views principais
+            if (viewId === 'login-view' || viewId === 'loading-view') {
+                mainAppWrapper.style.display = 'none';
+                document.getElementById(viewId).style.display = 'flex';
+            } else {
+                // Estamos logados, mostra o wrapper principal
+                mainAppWrapper.style.display = 'block';
+                // Mostra a sub-view (list ou edit)
+                document.getElementById(viewId).style.display = 'block';
+            }
+        }
+
+        /**
+         * Exibe uma mensagem flutuante (toast).
+         */
+        function showMessage(message, isError = false) {
+            const messageBox = document.getElementById('message-box');
+            const messageText = document.getElementById('message-text');
+            
+            messageText.textContent = message;
+            messageBox.className = 'fixed bottom-4 right-4 p-4 rounded-xl shadow-lg text-white'; // Reseta classes
+            messageBox.classList.add(isError ? 'bg-red-600' : 'bg-green-600');
+            
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        }
+
+        // --- Lógica Principal da Aplicação ---
+
+        /**
+         * Inicializa o Firebase e a autenticação.
+         */
+        async function initializeAppLogic() {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                setLogLevel('Debug'); 
+
+                // Gerencia o estado da autenticação
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // Usuário está logado
+                        userId = user.uid;
+                        console.log("Usuário autenticado:", userId);
+                        
+                        const collectionPath = `funcionarios_terceirizados`;
+                        console.log(`Usando coleção: ${collectionPath}`);
+                        funcionariosCollectionRef = collection(db, collectionPath);
+                        
+                        listenForEmployees(); // Começa a ouvir a lista de funcionários
+                        showView('list-view'); // Mostra a lista
+
+                    } else {
+                        // Usuário está deslogado
+                        userId = null;
+                        if (unsubscribeFromList) {
+                            unsubscribeFromList(); // Para de ouvir a lista antiga
+                            unsubscribeFromList = null;
+                        }
+                        allEmployees = []; // Limpa a lista
+                        renderEmployeeList(); // Limpa a UI
+                        console.log("Nenhum usuário. Mostrando login.");
+                        showView('login-view');
+                    }
+                });
+
+            } catch (error)
+             {
+                console.error("Erro na inicialização do Firebase:", error);
+                document.getElementById('auth-status').textContent = "Erro crítico na inicialização.";
+                showMessage("Erro ao conectar com Firebase: " + error.message, true);
+            }
+        }
+
+        // --- Lógica de Autenticação ---
+        
+        // Login
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('login-btn');
+            btn.disabled = true;
+            btn.textContent = "Entrando...";
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged vai cuidar de mostrar a tela certa
+            } catch (error) {
+                console.error("Erro no login:", error);
+                let msg = "Erro ao tentar entrar.";
+                if (error.code === 'auth/invalid-credential') {
+                    msg = "Email ou senha inválidos.";
+                }
+                showMessage(msg, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Entrar";
+            }
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                // onAuthStateChanged vai cuidar de mostrar a tela de login
+            } catch (error) {
+                console.error("Erro no logout:", error);
+                showMessage("Erro ao sair.", true);
+            }
+        });
+
+        // --- NOVO: Lógica de Exportação CSV ---
+
+        /**
+         * Exporta todos os dados dos funcionários (allEmployees) para um arquivo CSV.
+         */
+        function exportToCSV() {
+            if (allEmployees.length === 0) {
+                showMessage("Não há funcionários para exportar.", true);
+                return;
+            }
+
+            // Sanitiza um campo para CSV (trata aspas e vírgulas)
+            const sanitizeField = (field) => {
+                if (field === null || field === undefined) {
+                    return '""'; // Retorna string vazia com aspas
+                }
+                let str = String(field);
+                // Escapa aspas (") duplicando-as ("") e envolve o campo em aspas
+                return `"${str.replace(/"/g, '""')}"`;
+            };
+
+            // Define os cabeçalhos
+            const headers = [
+                "ID", "Nome Completo", "Empresa", "Unidade", "Servico", 
+                "Data Inicio Servico", "Data Emissao FAP", "Data Limite FAP", 
+                "Solicitante", "Telefone Solicitante", "Foto URL"
+            ];
+
+            // Mapeia os dados para linhas de CSV
+            const rows = allEmployees.map(emp => {
+                return [
+                    emp.id,
+                    emp.nomeCompleto,
+                    emp.empresa,
+                    emp.unidade,
+                    emp.servico,
+                    emp.dataInicioServico,
+                    emp.dataEmissaoFAP,
+                    emp.dataLimiteFAP,
+                    emp.solicitante,
+                    emp.telefoneSolicitante,
+                    emp.fotoUrl
+                ].map(sanitizeField).join(','); // Junta colunas com vírgula
+            });
+
+            // Junta cabeçalho e linhas
+            const csvContent = [headers.join(','), ...rows].join('\n');
+            
+            // Adiciona o BOM (Byte Order Mark) para o Excel entender acentuação (UTF-8)
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            // Cria o link de download
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            
+            const today = new Date().toISOString().split('T')[0];
+            link.setAttribute('download', `backup_funcionarios_${today}.csv`);
+            link.style.visibility = 'hidden';
+            
+            // Simula o clique no link para baixar
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showMessage("Exportação CSV iniciada.", false);
+        }
+
+       
+        // --- Lógica CRUD e FILTROS ---
+
+        // C (Create) - Botão "Cadastrar Novo"
+        document.getElementById('add-new-btn').addEventListener('click', () => {
+            currentEditingId = null; // Garante que estamos criando
+            editFormTitle.textContent = "Cadastrar Funcionário";
+            editForm.reset();
+            showView('edit-view');
+        });
+        
+        // R (Read) - Ouvir a lista de funcionários
+        function listenForEmployees() {
+            if (unsubscribeFromList) {
+                unsubscribeFromList(); // Cancela o listener anterior
+            }
+            
+            // Ouve em tempo real
+            unsubscribeFromList = onSnapshot(funcionariosCollectionRef, (querySnapshot) => {
+                allEmployees = []; // Reseta a lista principal
+                querySnapshot.docs.forEach(doc => {
+                    allEmployees.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Em vez de renderizar direto, chama a função de renderização
+                // que vai aplicar os filtros
+                renderEmployeeList(); 
+
+            }, (error) => {
+                console.error("Erro ao ouvir funcionários:", error);
+                showMessage("Erro ao carregar lista. " + error.message, true);
+            });
+        }
+        
+        // Função que aplica filtros e renderiza a lista
+        function renderEmployeeList() {
+            employeeListContainer.innerHTML = ''; // Limpa a lista atual
+            
+            // Pega os valores dos filtros
+            const nomeFilter = filterNome.value.trim().toLowerCase();
+            const dataInicioFilter = filterDataInicio.value;
+            const fapVencidaFilter = filterFapVencida.checked;
+            
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+
+            // Aplica os filtros
+            const filteredEmployees = allEmployees.filter(emp => {
+                // Filtro de Nome
+                if (nomeFilter && !emp.nomeCompletoLower.includes(nomeFilter)) {
+                    return false;
+                }
+                
+                // Filtro de Data de Início
+                if (dataInicioFilter && emp.dataInicioServico !== dataInicioFilter) {
+                    return false;
+                }
+                
+                // Filtro de FAP Vencida
+                if (fapVencidaFilter) {
+                    if (!emp.dataLimiteFAP) return false; // Se não tem FAP, não está vencida (para este filtro)
+                    const dataLimite = new Date(emp.dataLimiteFAP + "T00:00:00");
+                    if (hoje <= dataLimite) { // Se a FAP *não* está vencida, filtra
+                        return false;
+                    }
+                }
+                
+                return true; // Passou em todos os filtros
+            });
+
+            // Renderiza os funcionários filtrados
+            if (filteredEmployees.length === 0) {
+                employeeListContainer.innerHTML = '<p class="text-gray-500 text-center p-4">Nenhum funcionário encontrado com estes filtros.</p>';
+                return;
+            }
+
+            filteredEmployees.forEach(data => {
+                const el = document.createElement('div');
+                el.className = 'p-4 bg-white rounded-lg shadow-sm border border-gray-100 flex justify-between items-center';
+                
+                // Adiciona destaque visual se a FAP estiver vencida
+                let fapStatus = '';
+                if (data.dataLimiteFAP) {
+                    const dataLimite = new Date(data.dataLimiteFAP + "T00:00:00");
+                    if (hoje > dataLimite) {
+                        fapStatus = '<span class="text-xs font-bold text-red-600 ml-2">(FAP VENCIDA)</span>';
+                    }
+                }
+                
+                // MODIFICAÇÃO: Mostra a foto
+                el.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <img src="${data.fotoUrl ? data.fotoUrl : 'https://placehold.co/40x40/e0e0e0/707070?text=SF'}" 
+                             alt="Foto" 
+                             class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 flex-shrink-0">
+                        <div>
+                            <h3 class="text-lg font-semibold text-indigo-700">${data.nomeCompleto} ${fapStatus}</h3>
+                            <p class="text-gray-600 text-sm">${data.empresa}</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 flex-shrink-0 ml-4">
+                        <button data-id="${data.id}" class="edit-btn p-2 text-blue-600 hover:text-blue-800 rounded-full hover:bg-blue-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button data-id="${data.id}" data-name="${data.nomeCompleto}" class="delete-btn p-2 text-red-600 hover:text-red-800 rounded-full hover:bg-red-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+                employeeListContainer.appendChild(el);
+            });
+
+            // Adiciona listeners aos novos botões
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleEdit(btn.dataset.id));
+            });
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleDelete(btn.dataset.id, btn.dataset.name));
+            });
+        }
+        
+        // Listeners para os filtros
+        filterNome.addEventListener('input', () => renderEmployeeList());
+        filterDataInicio.addEventListener('input', () => renderEmployeeList());
+        filterFapVencida.addEventListener('change', () => renderEmployeeList());
+
+        clearFiltersBtn.addEventListener('click', () => {
+            filterNome.value = '';
+            filterDataInicio.value = '';
+            filterFapVencida.checked = false;
+            renderEmployeeList();
+        });
+
+        // Listener para o botão de exportar
+        exportCsvBtn.addEventListener('click', exportToCSV);
+
+
+        // U (Update) - Prepara o formulário para edição
+        async function handleEdit(docId) {
+            // Usa o array local, não precisa buscar no DB de novo
+            const data = allEmployees.find(emp => emp.id === docId);
+            
+            if (data) {
+                currentEditingId = docId; // Define que estamos editando
+                
+                // Preenche o formulário
+                document.getElementById('reg-nome').value = data.nomeCompleto;
+                document.getElementById('reg-empresa').value = data.empresa;
+                document.getElementById('reg-unidade').value = data.unidade;
+                document.getElementById('reg-servico').value = data.servico;
+                document.getElementById('reg-data-inicio').value = data.dataInicioServico;
+                document.getElementById('reg-data-emissao-fap').value = data.dataEmissaoFAP;
+                document.getElementById('reg-solicitante').value = data.solicitante;
+                document.getElementById('reg-tel-solicitante').value = data.telefoneSolicitante;
+
+                editFormTitle.textContent = "Editar Funcionário";
+                showView('edit-view');
+            } else {
+                showMessage("Erro: Funcionário não encontrado.", true);
+            }
+        }
+        
+        // D (Delete) - Pede confirmação para apagar
+        function handleDelete(docId, nome) {
+            currentDeletingId = docId;
+            document.getElementById('confirm-modal-text').textContent = `Tem certeza que deseja apagar o funcionário "${nome}"? Esta ação não pode ser desfeita.`;
+            confirmModal.style.display = 'flex';
+        }
+        
+        // Confirmação (Sim) do modal de apagar
+        document.getElementById('confirm-modal-delete-btn').addEventListener('click', async () => {
+            if (!currentDeletingId) return;
+
+            const btn = document.getElementById('confirm-modal-delete-btn');
+            btn.disabled = true;
+            btn.textContent = "Apagando...";
+
+            try {
+                const docRef = doc(db, funcionariosCollectionRef.path, currentDeletingId);
+                await deleteDoc(docRef);
+                showMessage("Funcionário apagado com sucesso!", false);
+                // O onSnapshot vai atualizar a lista automaticamente
+            } catch (error) {
+                console.error("Erro ao apagar:", error);
+                showMessage("Erro ao apagar: " + error.message, true);
+            } finally {
+                currentDeletingId = null;
+                confirmModal.style.display = 'none';
+                btn.disabled = false;
+                btn.textContent = "Apagar";
+            }
+        });
+
+        // Confirmação (Cancelar) do modal de apagar
+        document.getElementById('confirm-modal-cancel-btn').addEventListener('click', () => {
+            currentDeletingId = null;
+            confirmModal.style.display = 'none';
+        });
+
+        // Botão "Voltar" do formulário de edição
+        document.getElementById('back-to-list-btn').addEventListener('click', () => {
+            currentEditingId = null;
+            editForm.reset();
+            showView('list-view');
+        });
+
+        // Salvar (Tanto para Criar como para Editar)
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('save-register-btn');
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Salvando...</span>`;
+
+            try {
+                const nome = document.getElementById('reg-nome').value;
+                const nomeLower = nome.trim().toLowerCase();
+                
+                // --- Verificação de Duplicidade (APENAS AO CRIAR) ---
+                if (!currentEditingId) {
+                    // Checa no array local primeiro
+                    const existe = allEmployees.find(emp => emp.nomeCompletoLower === nomeLower);
+                    if (existe) {
+                        showMessage(`Erro: O funcionário "${nome}" já está cadastrado.`, true);
+                        // Precisa reabilitar o botão antes de sair
+                        btn.disabled = false;
+                        btn.innerHTML = `<span>Salvar</span>`;
+                        return; // Para a execução
+                    }
+                }
+                
+                const dataEmissaoFAP = document.getElementById('reg-data-emissao-fap').value;
+                const dataEmissao = new Date(dataEmissaoFAP + "T00:00:00"); 
+                dataEmissao.setDate(dataEmissao.getDate() + 60);
+                const dataLimiteFAP = dataEmissao.toISOString().split('T')[0];
+
+                const dadosFuncionario = {
+                    nomeCompleto: nome.trim(),
+                    nomeCompletoLower: nomeLower,
+                    empresa: document.getElementById('reg-empresa').value,
+                    unidade: document.getElementById('reg-unidade').value,
+                    servico: document.getElementById('reg-servico').value,
+                    dataInicioServico: document.getElementById('reg-data-inicio').value,
+                    dataEmissaoFAP: dataEmissaoFAP,
+                    dataLimiteFAP: dataLimiteFAP,
+                    solicitante: document.getElementById('reg-solicitante').value,
+                    telefoneSolicitante: document.getElementById('reg-tel-solicitante').value,
+                    updatedAt: Timestamp.now()
+                };
+
+                if (currentEditingId) {
+                    // --- EDITANDO (Update) ---
+                    const docRef = doc(db, funcionariosCollectionRef.path, currentEditingId);
+                    // Pega fotoUrl existente para não sobrescrever
+                    const docLocal = allEmployees.find(emp => emp.id === currentEditingId);
+                    dadosFuncionario.fotoUrl = docLocal.fotoUrl || null; 
+                    
+                    await updateDoc(docRef, dadosFuncionario);
+                    showMessage("Funcionário atualizado com sucesso!", false);
+                } else {
+                    // --- CRIANDO (Add) ---
+                    dadosFuncionario.createdAt = Timestamp.now();
+                    dadosFuncionario.fotoUrl = null; // Garante que começa nulo
+                    await addDoc(funcionariosCollectionRef, dadosFuncionario);
+                    showMessage("Funcionário cadastrado com sucesso!", false);
+                }
+
+                editForm.reset();
+                currentEditingId = null;
+                showView('list-view'); // Volta para a lista
+
+            } catch (error) {
+                console.error("Erro ao salvar:", error);
+                showMessage("Erro ao salvar: " + error.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Salvar</span>`;
+            }
+        });
+
+        // --- Inicialização ---
+        window.addEventListener('DOMContentLoaded', initializeAppLogic);
+
+    </script>
+</body>
+</html>
