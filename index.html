@@ -144,7 +144,6 @@
                 Bater Foto
             </button>
             
-            <!-- NOVO BOTÃO DE INVERTER -->
             <button id="flip-camera-btn" class="w-full mt-2 bg-gray-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-gray-600 transition duration-300">
                 Inverter Câmera
             </button>
@@ -183,9 +182,7 @@
             onSnapshot, 
             query, 
             where,
-            orderBy,
-            startAt,
-            endAt,
+            getDocs, // Removido 'getDocs' pois não vamos mais usar query de busca
             setLogLevel
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { 
@@ -214,11 +211,14 @@
         let searchDebounceTimer;
         let currentEmployeeId = null; // ID do funcionário sendo visto/fotografado
         
+        // NOVO: Cache local de funcionários
+        let allEmployees = [];
+        let unsubscribeFromList = null;
+        
         // --- Variáveis da Câmera ---
         const videoElement = document.getElementById('camera-video');
         const canvasElement = document.getElementById('camera-canvas');
         let videoStream; // Para guardar o stream da câmera
-        // NOVO: Define o modo da câmera (traseira por padrão)
         let currentFacingMode = 'environment'; // 'environment' = traseira, 'user' = frontal
         
         // --- Elementos do DOM ---
@@ -297,7 +297,11 @@
                         console.log(`Usando coleção: ${collectionPath}`);
                         funcionariosCollectionRef = collection(db, collectionPath);
                         
-                        document.getElementById('auth-status').textContent = "Conectado. Carregando...";
+                        document.getElementById('auth-status').textContent = "Carregando dados...";
+                        
+                        // **NOVA LÓGICA:** Carrega todos os funcionários
+                        loadAllEmployees(); 
+                        
                         showView('search-view'); // Mostra a tela de busca
 
                     } else {
@@ -321,97 +325,103 @@
                 showMessage("Erro ao conectar com Firebase: " + error.message, true);
             }
         }
-
-        // --- Lógica de Busca ---
-
-        searchInput.addEventListener('input', () => {
-            // Limpa o timer anterior
-            clearTimeout(searchDebounceTimer);
-            
-            // Cria um novo timer
-            searchDebounceTimer = setTimeout(() => {
-                const searchTerm = searchInput.value.trim().toLowerCase();
-                performSearch(searchTerm);
-            }, 300); // Espera 300ms após o usuário parar de digitar
-        });
-
-        async function performSearch(searchTerm) {
-            if (searchTerm.length < 2) {
-                searchResults.innerHTML = ''; // Limpa se a busca for muito curta
-                return;
-            }
-
-            if (!funcionariosCollectionRef) {
-                showMessage("Aguarde, conectando ao banco de dados...", true);
-                return;
+        
+        /**
+         * NOVO: Carrega todos os funcionários para o cache local (allEmployees)
+         */
+        function loadAllEmployees() {
+            if (unsubscribeFromList) {
+                unsubscribeFromList(); // Para o listener antigo se houver
             }
             
-            searchResults.innerHTML = '<p class="text-gray-500 text-center">Buscando...</p>';
-
-            try {
-                // Query para buscar pelo campo `nomeCompletoLower`
-                const q = query(
-                    funcionariosCollectionRef,
-                    where("nomeCompletoLower", ">=", searchTerm),
-                    where("nomeCompletoLower", "<=", searchTerm + '\uf8ff') // \uf8ff é um caractere unicode que marca o fim da string
-                );
-
-                const querySnapshot = await getDocs(q);
+            // Ouve a coleção inteira em tempo real
+            unsubscribeFromList = onSnapshot(funcionariosCollectionRef, (querySnapshot) => {
+                allEmployees = []; // Limpa o cache
+                querySnapshot.docs.forEach(doc => {
+                    allEmployees.push({ id: doc.id, ...doc.data() });
+                });
                 
-                if (querySnapshot.empty) {
-                    searchResults.innerHTML = '<p class="text-gray-500 text-center">Nenhum funcionário encontrado.</p>';
-                    return;
+                console.log(`Carregados ${allEmployees.length} funcionários no cache local.`);
+                document.getElementById('auth-status').textContent = "Conectado"; // Atualiza status
+                
+                // Se o usuário já estava digitando, atualiza a busca
+                const searchTerm = searchInput.value.trim().toLowerCase();
+                if (searchTerm.length > 1) {
+                    performSearch(searchTerm);
                 }
 
-                searchResults.innerHTML = ''; // Limpa os resultados antigos
-                
-                querySnapshot.docs.forEach(doc => {
-                    const data = doc.data();
-                    const el = document.createElement('div');
-                    el.className = 'p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-indigo-50 cursor-pointer transition-colors';
-                    el.innerHTML = `
-                        <h3 class="text-lg font-semibold text-indigo-700">${data.nomeCompleto}</h3>
-                        <p class="text-gray-600">${data.empresa}</p>
-                    `;
-                    el.addEventListener('click', () => showProfile(doc.id));
-                    searchResults.appendChild(el);
-                });
+            }, (error) => {
+                console.error("Erro ao carregar funcionários (onSnapshot):", error);
+                // Este é o erro de permissão!
+                showMessage("Erro ao carregar dados. Verifique as Regras de Segurança do Firestore.", true);
+                document.getElementById('auth-status').textContent = "Erro de permissão.";
+            });
+        }
 
-            } catch (error) {
-                console.error("Erro na busca: ", error);
-                showMessage("Erro ao realizar a busca: " + error.message, true);
-                searchResults.innerHTML = '<p class="text-red-500 text-center">Erro ao buscar.</p>';
+
+        // --- Lógica de Busca (MODIFICADA) ---
+
+        searchInput.addEventListener('input', () => {
+            // Não usa mais 'debounce' pois a busca local é instantânea
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            performSearch(searchTerm);
+        });
+
+        /**
+         * MODIFICADO: Busca no array local 'allEmployees'
+         */
+        function performSearch(searchTerm) {
+            if (searchTerm.length < 2) {
+                searchResults.innerHTML = '<p class="text-gray-500 text-center p-4">Digite ao menos 2 letras.</p>';
+                return;
             }
+
+            if (allEmployees.length === 0) {
+                searchResults.innerHTML = '<p class="text-gray-500 text-center">Nenhum funcionário cadastrado.</p>';
+                return;
+            }
+
+            // Filtra o array local
+            const filtered = allEmployees.filter(emp => 
+                emp.nomeCompletoLower && emp.nomeCompletoLower.includes(searchTerm)
+            );
+
+            if (filtered.length === 0) {
+                searchResults.innerHTML = '<p class="text-gray-500 text-center">Nenhum funcionário encontrado.</p>';
+                return;
+            }
+
+            searchResults.innerHTML = ''; // Limpa os resultados antigos
+            
+            filtered.forEach(data => {
+                const el = document.createElement('div');
+                el.className = 'p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:bg-indigo-50 cursor-pointer transition-colors';
+                el.innerHTML = `
+                    <h3 class="text-lg font-semibold text-indigo-700">${data.nomeCompleto}</h3>
+                    <p class="text-gray-600">${data.empresa}</p>
+                `;
+                // MODIFICAÇÃO: Passa o objeto 'data' inteiro
+                el.addEventListener('click', () => showProfile(data));
+                searchResults.appendChild(el);
+            });
         }
         
-        // --- Lógica de Perfil ---
+        // --- Lógica de Perfil (MODIFICADA) ---
         
         document.getElementById('back-to-search-btn').addEventListener('click', () => {
             searchInput.value = '';
-            searchResults.innerHTML = '';
+            searchResults.innerHTML = '<p class="text-gray-500 text-center p-4">Digite ao menos 2 letras.</p>';
             showView('search-view');
         });
 
-        async function showProfile(docId) {
-            currentEmployeeId = docId; // Salva o ID do funcionário atual
+        /**
+         * MODIFICADO: Recebe o objeto 'data' do array local, não faz busca no DB
+         */
+        function showProfile(data) {
+            currentEmployeeId = data.id; // Salva o ID do funcionário atual
             
-            if (!funcionariosCollectionRef) {
-                showMessage("Erro: Conexão com banco de dados perdida.", true);
-                return;
-            }
-
             try {
-                const docRef = doc(db, funcionariosCollectionRef.path, docId);
-                const docSnap = await getDoc(docRef);
-
-                if (!docSnap.exists()) {
-                    showMessage("Erro: Funcionário não encontrado.", true);
-                    return;
-                }
-                
-                const data = docSnap.data();
-                
-                // Preenche os dados
+                // Preenche os dados diretamente do objeto
                 document.getElementById('profile-nome').textContent = data.nomeCompleto || 'N/A';
                 document.getElementById('profile-empresa').textContent = data.empresa || 'N/A';
                 document.getElementById('profile-unidade').textContent = data.unidade || 'N/A';
@@ -490,9 +500,9 @@
             }
         }
         
-        // --- Lógica da Câmera ---
+        // --- Lógica da Câmera (Sem alterações) ---
 
-        // NOVO: Função para PARAR o stream da câmera
+        // Função para PARAR o stream da câmera
         function stopCameraStream() {
             if (videoStream) {
                 videoStream.getTracks().forEach(track => {
@@ -504,7 +514,7 @@
             }
         }
 
-        // NOVO: Função para INICIAR o stream da câmera
+        // Função para INICIAR o stream da câmera
         async function startCameraStream(facingMode) {
             stopCameraStream(); // Para qualquer stream anterior
             
@@ -541,13 +551,11 @@
         
         // Botão "Tirar Foto" (do Perfil) - Abre a câmera
         document.getElementById('profile-take-photo-btn').addEventListener('click', () => {
-            // currentEmployeeId já foi definido quando showProfile foi chamado
             if (!currentEmployeeId) {
                 showMessage("Erro: ID do funcionário não encontrado.", true);
                 return;
             }
             showView('camera-view');
-            // Inicia a câmera com o modo atual (traseira por padrão)
             startCameraStream(currentFacingMode); 
         });
 
@@ -557,33 +565,20 @@
             showView('profile-view');
         });
         
-        // NOVO: Botão "Inverter Câmera"
+        // Botão "Inverter Câmera"
         document.getElementById('flip-camera-btn').addEventListener('click', () => {
-            // Inverte o modo
             currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
-            // Reinicia a câmera com o novo modo
             startCameraStream(currentFacingMode);
         });
 
         // Botão "Bater Foto" (da Câmera)
         document.getElementById('capture-photo-btn').addEventListener('click', () => {
             const context = canvasElement.getContext('2d');
-            
-            // Define o tamanho do canvas para o tamanho do vídeo
             canvasElement.width = videoElement.videoWidth;
             canvasElement.height = videoElement.videoHeight;
-            
-            // Desenha o frame atual do vídeo no canvas
             context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-            
-            // Converte o canvas para uma imagem (Base64)
-            // Usamos JPEG para economizar espaço
             const photoDataUrl = canvasElement.toDataURL('image/jpeg', 0.8);
-            
-            // Para o stream da câmera AGORA
             stopCameraStream(); 
-            
-            // Salva a foto
             savePhoto(photoDataUrl);
         });
 
@@ -598,19 +593,17 @@
             btn.disabled = true;
             btn.textContent = "Salvando...";
             
+            let downloadURL = null; // Para guardar a URL
+            
             try {
-                // Caminho no Storage
                 const storagePath = `fotos_funcionarios/${currentEmployeeId}.jpg`;
                 const storageRef = ref(storage, storagePath);
                 
-                // Faz o upload da string Base64 (removendo o prefixo)
                 const uploadResult = await uploadString(storageRef, dataUrl, 'data_url');
                 console.log("Foto enviada:", uploadResult);
 
-                // Pega a URL de download
-                const downloadURL = await getDownloadURL(uploadResult.ref);
+                downloadURL = await getDownloadURL(uploadResult.ref);
                 
-                // Atualiza o documento do funcionário no Firestore
                 const docRef = doc(db, funcionariosCollectionRef.path, currentEmployeeId);
                 await updateDoc(docRef, {
                     fotoUrl: downloadURL
@@ -618,16 +611,20 @@
 
                 showMessage("Foto salva com sucesso!", false);
                 
-                // Recarrega o perfil para mostrar a nova foto
-                await showProfile(currentEmployeeId);
-                // A view já foi trocada pelo showProfile
+                // MODIFICADO: Atualiza o perfil localmente
+                const updatedEmployeeData = allEmployees.find(emp => emp.id === currentEmployeeId);
+                if (updatedEmployeeData) {
+                    updatedEmployeeData.fotoUrl = downloadURL; // Atualiza a URL da foto no cache
+                    showProfile(updatedEmployeeData); // Mostra o perfil com os dados atualizados
+                } else {
+                    showView('search-view'); // Fallback
+                }
 
             } catch (error) {
                 console.error("Erro ao salvar foto:", error);
                 showMessage("Erro ao salvar foto: " + error.message, true);
                 showView('profile-view'); // Volta ao perfil mesmo se der erro
             } finally {
-                // Não precisa parar o stream aqui, já foi parado ao bater a foto
                 btn.disabled = false;
                 btn.textContent = "Bater Foto";
             }
@@ -636,8 +633,7 @@
         // --- Inicialização ---
         window.addEventListener('DOMContentLoaded', initializeAppLogic);
 
-    </script>
-</body>
+    </script></body>
 </html>
 
 
