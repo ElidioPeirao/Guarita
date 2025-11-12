@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>Controle de Acesso - Admin</title>
     <!-- Carrega o Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,7 +19,6 @@
 <body class="bg-slate-100 font-sans antialiased flex items-center justify-center min-h-screen p-4">
 
     <!-- Container Principal - "cartão" centralizado -->
-    <!-- Aumentei o max-w-lg para max-w-2xl para caber os filtros -->
     <div class="container mx-auto max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden">
 
         <!-- 1. Tela de Carregamento Inicial -->
@@ -66,7 +65,6 @@
             <div id="list-view" class="view p-6 md:p-8">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">Funcionários</h2>
-                    <!-- MODIFICAÇÃO: Wrapper e novo botão de exportar -->
                     <div class="flex space-x-2">
                         <button id="export-csv-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
                             Exportar Tudo (CSV)
@@ -80,20 +78,16 @@
                 <!-- FILTROS -->
                 <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
                     <h3 class="text-lg font-semibold text-gray-700 mb-3">Filtrar por:</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
                         <div>
                             <label for="filter-nome" class="block text-sm font-medium text-gray-700">Nome</label>
                             <input type="text" id="filter-nome" placeholder="Digite um nome..." class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label for="filter-data-inicio" class="block text-sm font-medium text-gray-700">Data de Início do Serviço</label>
-                            <input type="date" id="filter-data-inicio" class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
                     </div>
                     <div class="mt-4 flex items-center justify-between">
                         <div class="flex items-center">
                             <input id="filter-fap-vencida" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                            <label for="filter-fap-vencida" class="ml-2 block text-sm font-medium text-gray-800">Mostrar apenas FAP vencidas</label>
+                            <label for="filter-fap-vencida" class="ml-2 block text-sm font-medium text-gray-800">Mostrar apenas documentos vencidos</label>
                         </div>
                         <button id="clear-filters-btn" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Limpar Filtros</button>
                     </div>
@@ -114,7 +108,7 @@
                 </header>
                 
                 <form id="edit-form" class="space-y-4">
-                    <!-- Campos do formulário (iguais ao anterior) -->
+                    <!-- Campos do formulário -->
                     <div>
                         <label for="reg-nome" class="block text-sm font-medium text-gray-700">Nome Completo</label>
                         <input type="text" id="reg-nome" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
@@ -131,14 +125,29 @@
                         <label for="reg-servico" class="block text-sm font-medium text-gray-700">Serviço</label>
                         <input type="text" id="reg-servico" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
+                    
+                    <!-- NOVO: Seletor de Documento -->
                     <div>
-                        <label for="reg-data-inicio" class="block text-sm font-medium text-gray-700">Data Início Serviço</label>
-                        <input type="date" id="reg-data-inicio" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                        <label for="reg-tipo-documento" class="block text-sm font-medium text-gray-700">Tipo de Documento</label>
+                        <select id="reg-tipo-documento" class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                            <option value="FAP">FAP (Validade 90 dias)</option>
+                            <option value="ASO">ASO (Validade 365 dias)</option>
+                        </select>
                     </div>
-                    <div>
-                        <label for="reg-data-emissao-fap" class="block text-sm font-medium text-gray-700">Data Emissão FAP (Gera validade de 60 dias)</label>
+
+                    <!-- NOVO: Campo FAP -->
+                    <div id="fap-input-wrapper">
+                        <label for="reg-data-emissao-fap" class="block text-sm font-medium text-gray-700">Data Emissão FAP</label>
                         <input type="date" id="reg-data-emissao-fap" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
+                    
+                    <!-- NOVO: Campo ASO -->
+                    <div id="aso-input-wrapper" style="display: none;">
+                        <label for="reg-data-emissao-aso" class="block text-sm font-medium text-gray-700">Data Emissão ASO</label>
+                        <input type="date" id="reg-data-emissao-aso" class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <!-- Restante do formulário -->
                     <div>
                         <label for="reg-solicitante" class="block text-sm font-medium text-gray-700">Solicitante</label>
                         <input type="text" id="reg-solicitante" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
@@ -223,7 +232,7 @@
         let currentDeletingId = null; // Para saber quem apagar
         let unsubscribeFromList = null; // Para parar de ouvir a lista ao deslogar
         
-        let allEmployees = []; // NOVO: Array para guardar todos os funcionários
+        let allEmployees = []; // Array para guardar todos os funcionários
         
         // --- Elementos do DOM ---
         const views = document.querySelectorAll('.view');
@@ -239,45 +248,40 @@
         
         // Elementos de Filtro
         const filterNome = document.getElementById('filter-nome');
-        const filterDataInicio = document.getElementById('filter-data-inicio');
         const filterFapVencida = document.getElementById('filter-fap-vencida');
         const clearFiltersBtn = document.getElementById('clear-filters-btn');
-        // Botão de exportar
         const exportCsvBtn = document.getElementById('export-csv-btn');
+
+        // NOVO: Elementos do formulário FAP/ASO
+        const regTipoDocumento = document.getElementById('reg-tipo-documento');
+        const fapInputWrapper = document.getElementById('fap-input-wrapper');
+        const asoInputWrapper = document.getElementById('aso-input-wrapper');
+        const regDataEmissaoFap = document.getElementById('reg-data-emissao-fap');
+        const regDataEmissaoAso = document.getElementById('reg-data-emissao-aso');
 
         
         // --- Funções Auxiliares ---
 
-        /**
-         * Exibe uma tela (view) e esconde as outras.
-         */
         function showView(viewId) {
              views.forEach(view => {
                 view.style.display = 'none';
             });
-            // Trata as views principais
             if (viewId === 'login-view' || viewId === 'loading-view') {
                 mainAppWrapper.style.display = 'none';
-                document.getElementById(viewId).style.display = 'flex';
+                const viewEl = document.getElementById(viewId);
+                viewEl.style.display = (viewId === 'loading-view') ? 'flex' : 'block';
             } else {
-                // Estamos logados, mostra o wrapper principal
                 mainAppWrapper.style.display = 'block';
-                // Mostra a sub-view (list ou edit)
                 document.getElementById(viewId).style.display = 'block';
             }
         }
 
-        /**
-         * Exibe uma mensagem flutuante (toast).
-         */
         function showMessage(message, isError = false) {
             const messageBox = document.getElementById('message-box');
             const messageText = document.getElementById('message-text');
-            
             messageText.textContent = message;
-            messageBox.className = 'fixed bottom-4 right-4 p-4 rounded-xl shadow-lg text-white'; // Reseta classes
+            messageBox.className = 'fixed bottom-4 right-4 p-4 rounded-xl shadow-lg text-white';
             messageBox.classList.add(isError ? 'bg-red-600' : 'bg-green-600');
-            
             messageBox.style.display = 'block';
             setTimeout(() => {
                 messageBox.style.display = 'none';
@@ -286,9 +290,6 @@
 
         // --- Lógica Principal da Aplicação ---
 
-        /**
-         * Inicializa o Firebase e a autenticação.
-         */
         async function initializeAppLogic() {
             try {
                 app = initializeApp(firebaseConfig);
@@ -296,36 +297,28 @@
                 db = getFirestore(app);
                 setLogLevel('Debug'); 
 
-                // Gerencia o estado da autenticação
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        // Usuário está logado
                         userId = user.uid;
                         console.log("Usuário autenticado:", userId);
-                        
                         const collectionPath = `funcionarios_terceirizados`;
                         console.log(`Usando coleção: ${collectionPath}`);
                         funcionariosCollectionRef = collection(db, collectionPath);
-                        
-                        listenForEmployees(); // Começa a ouvir a lista de funcionários
-                        showView('list-view'); // Mostra a lista
-
+                        listenForEmployees();
+                        showView('list-view');
                     } else {
-                        // Usuário está deslogado
                         userId = null;
                         if (unsubscribeFromList) {
-                            unsubscribeFromList(); // Para de ouvir a lista antiga
+                            unsubscribeFromList();
                             unsubscribeFromList = null;
                         }
-                        allEmployees = []; // Limpa a lista
-                        renderEmployeeList(); // Limpa a UI
+                        allEmployees = [];
+                        renderEmployeeList();
                         console.log("Nenhum usuário. Mostrando login.");
                         showView('login-view');
                     }
                 });
-
-            } catch (error)
-             {
+            } catch (error) {
                 console.error("Erro na inicialização do Firebase:", error);
                 document.getElementById('auth-status').textContent = "Erro crítico na inicialização.";
                 showMessage("Erro ao conectar com Firebase: " + error.message, true);
@@ -334,7 +327,6 @@
 
         // --- Lógica de Autenticação ---
         
-        // Login
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
@@ -342,10 +334,8 @@
             const btn = document.getElementById('login-btn');
             btn.disabled = true;
             btn.textContent = "Entrando...";
-
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-                // onAuthStateChanged vai cuidar de mostrar a tela certa
             } catch (error) {
                 console.error("Erro no login:", error);
                 let msg = "Erro ao tentar entrar.";
@@ -359,46 +349,37 @@
             }
         });
 
-        // Logout
         document.getElementById('logout-btn').addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                // onAuthStateChanged vai cuidar de mostrar a tela de login
             } catch (error) {
                 console.error("Erro no logout:", error);
                 showMessage("Erro ao sair.", true);
             }
         });
 
-        // --- NOVO: Lógica de Exportação CSV ---
+        // --- Lógica de Exportação CSV ---
 
-        /**
-         * Exporta todos os dados dos funcionários (allEmployees) para um arquivo CSV.
-         */
         function exportToCSV() {
             if (allEmployees.length === 0) {
                 showMessage("Não há funcionários para exportar.", true);
                 return;
             }
 
-            // Sanitiza um campo para CSV (trata aspas e vírgulas)
             const sanitizeField = (field) => {
-                if (field === null || field === undefined) {
-                    return '""'; // Retorna string vazia com aspas
-                }
+                if (field === null || field === undefined) return '""';
                 let str = String(field);
-                // Escapa aspas (") duplicando-as ("") e envolve o campo em aspas
                 return `"${str.replace(/"/g, '""')}"`;
             };
 
-            // Define os cabeçalhos
+            // ATUALIZADO: Cabeçalhos
             const headers = [
                 "ID", "Nome Completo", "Empresa", "Unidade", "Servico", 
-                "Data Inicio Servico", "Data Emissao FAP", "Data Limite FAP", 
+                "Tipo Documento", "Data Emissao", "Data Limite", 
                 "Solicitante", "Telefone Solicitante", "Foto URL"
             ];
 
-            // Mapeia os dados para linhas de CSV
+            // ATUALIZADO: Linhas
             const rows = allEmployees.map(emp => {
                 return [
                     emp.id,
@@ -406,146 +387,112 @@
                     emp.empresa,
                     emp.unidade,
                     emp.servico,
-                    emp.dataInicioServico,
-                    emp.dataEmissaoFAP,
-                    emp.dataLimiteFAP,
+                    emp.tipoDocumento, // NOVO
+                    emp.dataEmissao,   // NOVO
+                    emp.dataLimite,    // NOVO
                     emp.solicitante,
                     emp.telefoneSolicitante,
                     emp.fotoUrl
-                ].map(sanitizeField).join(','); // Junta colunas com vírgula
+                ].map(sanitizeField).join(',');
             });
 
-            // Junta cabeçalho e linhas
-            const csvContent = [headers.join(','), ...rows].join('\n');
+            const csvContent = [ headers.join(','), ...rows ].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             
-            // Adiciona o BOM (Byte Order Mark) para o Excel entender acentuação (UTF-8)
-            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
-            
-            // Cria o link de download
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            link.setAttribute('href', url);
-            
-            const today = new Date().toISOString().split('T')[0];
-            link.setAttribute('download', `backup_funcionarios_${today}.csv`);
-            link.style.visibility = 'hidden';
-            
-            // Simula o clique no link para baixar
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            
-            showMessage("Exportação CSV iniciada.", false);
-        }
-
-       
-        // --- Lógica CRUD e FILTROS ---
-
-        // C (Create) - Botão "Cadastrar Novo"
-        document.getElementById('add-new-btn').addEventListener('click', () => {
-            currentEditingId = null; // Garante que estamos criando
-            editFormTitle.textContent = "Cadastrar Funcionário";
-            editForm.reset();
-            showView('edit-view');
-        });
-        
-        // R (Read) - Ouvir a lista de funcionários
-        function listenForEmployees() {
-            if (unsubscribeFromList) {
-                unsubscribeFromList(); // Cancela o listener anterior
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                const dataHoje = new Date().toISOString().split('T')[0];
+                link.setAttribute("href", url);
+                link.setAttribute("download", `backup_funcionarios_${dataHoje}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
+        }
+        exportCsvBtn.addEventListener('click', exportToCSV);
+
+
+        // --- Lógica de CRUD (Listar, Cadastrar, Editar, Apagar) ---
+        
+        function listenForEmployees() {
+            if (unsubscribeFromList) unsubscribeFromList();
             
-            // Ouve em tempo real
             unsubscribeFromList = onSnapshot(funcionariosCollectionRef, (querySnapshot) => {
-                allEmployees = []; // Reseta a lista principal
+                allEmployees = [];
                 querySnapshot.docs.forEach(doc => {
                     allEmployees.push({ id: doc.id, ...doc.data() });
                 });
-                
-                // Em vez de renderizar direto, chama a função de renderização
-                // que vai aplicar os filtros
-                renderEmployeeList(); 
-
+                console.log(`Carregados ${allEmployees.length} funcionários no cache local.`);
+                renderEmployeeList();
             }, (error) => {
-                console.error("Erro ao ouvir funcionários:", error);
-                showMessage("Erro ao carregar lista. " + error.message, true);
+                console.error("Erro ao carregar funcionários (onSnapshot):", error);
+                showMessage("Erro ao carregar dados. Verifique as Regras de Segurança.", true);
             });
         }
-        
-        // Função que aplica filtros e renderiza a lista
+
         function renderEmployeeList() {
-            employeeListContainer.innerHTML = ''; // Limpa a lista atual
+            employeeListContainer.innerHTML = '';
             
-            // Pega os valores dos filtros
             const nomeFilter = filterNome.value.trim().toLowerCase();
-            const dataInicioFilter = filterDataInicio.value;
             const fapVencidaFilter = filterFapVencida.checked;
             
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
 
-            // Aplica os filtros
             const filteredEmployees = allEmployees.filter(emp => {
-                // Filtro de Nome
                 if (nomeFilter && !emp.nomeCompletoLower.includes(nomeFilter)) {
                     return false;
                 }
                 
-                // Filtro de Data de Início
-                if (dataInicioFilter && emp.dataInicioServico !== dataInicioFilter) {
-                    return false;
-                }
-                
-                // Filtro de FAP Vencida
                 if (fapVencidaFilter) {
-                    if (!emp.dataLimiteFAP) return false; // Se não tem FAP, não está vencida (para este filtro)
-                    const dataLimite = new Date(emp.dataLimiteFAP + "T00:00:00");
-                    if (hoje <= dataLimite) { // Se a FAP *não* está vencida, filtra
-                        return false;
+                    if (!emp.dataLimite) return true; // Inclui se DOC não preenchido
+                    const dataLimite = new Date(emp.dataLimite + "T00:00:00");
+                    if (dataLimite >= hoje) {
+                        return false; // DOC não está vencido, então esconde
                     }
                 }
-                
-                return true; // Passou em todos os filtros
+                return true;
             });
 
-            // Renderiza os funcionários filtrados
             if (filteredEmployees.length === 0) {
-                employeeListContainer.innerHTML = '<p class="text-gray-500 text-center p-4">Nenhum funcionário encontrado com estes filtros.</p>';
+                employeeListContainer.innerHTML = '<p class="text-gray-500 text-center p-4">Nenhum funcionário encontrado.</p>';
                 return;
             }
 
-            filteredEmployees.forEach(data => {
+            filteredEmployees.forEach(emp => {
                 const el = document.createElement('div');
-                el.className = 'p-4 bg-white rounded-lg shadow-sm border border-gray-100 flex justify-between items-center';
+                el.className = 'p-4 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-between';
                 
-                // Adiciona destaque visual se a FAP estiver vencida
-                let fapStatus = '';
-                if (data.dataLimiteFAP) {
-                    const dataLimite = new Date(data.dataLimiteFAP + "T00:00:00");
-                    if (hoje > dataLimite) {
-                        fapStatus = '<span class="text-xs font-bold text-red-600 ml-2">(FAP VENCIDA)</span>';
+                // ATUALIZADO: Lógica de Status
+                let docStatus = '';
+                const tipoDoc = emp.tipoDocumento || 'DOC';
+                if (emp.dataLimite) {
+                    const dataLimite = new Date(emp.dataLimite + "T00:00:00");
+                    if (dataLimite < hoje) {
+                        docStatus = `<span class="text-xs font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full ml-2">${tipoDoc} VENCIDO</span>`;
+                    } else {
+                        docStatus = `<span class="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-2">${tipoDoc} VÁLIDO</span>`;
                     }
+                } else {
+                    docStatus = `<span class="text-xs font-semibold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full ml-2">SEM ${tipoDoc}</span>`;
                 }
-                
-                // MODIFICAÇÃO: Mostra a foto
+
                 el.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <img src="${data.fotoUrl ? data.fotoUrl : 'https://placehold.co/40x40/e0e0e0/707070?text=SF'}" 
-                             alt="Foto" 
-                             class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 flex-shrink-0">
+                    <div class="flex items-center">
+                        <img src="${emp.fotoUrl || 'https://placehold.co/50x50/e0e0e0/707070?text=S/F'}" alt="Foto" class="w-12 h-12 rounded-full object-cover mr-4">
                         <div>
-                            <h3 class="text-lg font-semibold text-indigo-700">${data.nomeCompleto} ${fapStatus}</h3>
-                            <p class="text-gray-600 text-sm">${data.empresa}</p>
+                            <h3 class="text-lg font-semibold text-indigo-700">${emp.nomeCompleto}</h3>
+                            <p class="text-gray-600">${emp.empresa}</p>
+                            ${docStatus}
                         </div>
                     </div>
-                    <div class="flex space-x-2 flex-shrink-0 ml-4">
-                        <button data-id="${data.id}" class="edit-btn p-2 text-blue-600 hover:text-blue-800 rounded-full hover:bg-blue-100">
+                    <div class="flex space-x-2">
+                        <button data-id="${emp.id}" class="edit-btn p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         </button>
-                        <button data-id="${data.id}" data-name="${data.nomeCompleto}" class="delete-btn p-2 text-red-600 hover:text-red-800 rounded-full hover:bg-red-100">
+                        <button data-id="${emp.id}" class="delete-btn p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
@@ -553,170 +500,200 @@
                 employeeListContainer.appendChild(el);
             });
 
-            // Adiciona listeners aos novos botões
             document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', () => handleEdit(btn.dataset.id));
+                btn.addEventListener('click', () => openEditModal(btn.dataset.id));
             });
             document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', () => handleDelete(btn.dataset.id, btn.dataset.name));
+                btn.addEventListener('click', () => openConfirmModal(btn.dataset.id));
             });
         }
         
-        // Listeners para os filtros
+        // Adiciona listeners aos filtros
         filterNome.addEventListener('input', () => renderEmployeeList());
-        filterDataInicio.addEventListener('input', () => renderEmployeeList());
         filterFapVencida.addEventListener('change', () => renderEmployeeList());
-
         clearFiltersBtn.addEventListener('click', () => {
             filterNome.value = '';
-            filterDataInicio.value = '';
             filterFapVencida.checked = false;
             renderEmployeeList();
         });
 
-        // Listener para o botão de exportar
-        exportCsvBtn.addEventListener('click', exportToCSV);
-
-
-        // U (Update) - Prepara o formulário para edição
-        async function handleEdit(docId) {
-            // Usa o array local, não precisa buscar no DB de novo
-            const data = allEmployees.find(emp => emp.id === docId);
-            
-            if (data) {
-                currentEditingId = docId; // Define que estamos editando
-                
-                // Preenche o formulário
-                document.getElementById('reg-nome').value = data.nomeCompleto;
-                document.getElementById('reg-empresa').value = data.empresa;
-                document.getElementById('reg-unidade').value = data.unidade;
-                document.getElementById('reg-servico').value = data.servico;
-                document.getElementById('reg-data-inicio').value = data.dataInicioServico;
-                document.getElementById('reg-data-emissao-fap').value = data.dataEmissaoFAP;
-                document.getElementById('reg-solicitante').value = data.solicitante;
-                document.getElementById('reg-tel-solicitante').value = data.telefoneSolicitante;
-
-                editFormTitle.textContent = "Editar Funcionário";
-                showView('edit-view');
-            } else {
-                showMessage("Erro: Funcionário não encontrado.", true);
-            }
-        }
-        
-        // D (Delete) - Pede confirmação para apagar
-        function handleDelete(docId, nome) {
-            currentDeletingId = docId;
-            document.getElementById('confirm-modal-text').textContent = `Tem certeza que deseja apagar o funcionário "${nome}"? Esta ação não pode ser desfeita.`;
-            confirmModal.style.display = 'flex';
-        }
-        
-        // Confirmação (Sim) do modal de apagar
-        document.getElementById('confirm-modal-delete-btn').addEventListener('click', async () => {
-            if (!currentDeletingId) return;
-
-            const btn = document.getElementById('confirm-modal-delete-btn');
-            btn.disabled = true;
-            btn.textContent = "Apagando...";
-
-            try {
-                const docRef = doc(db, funcionariosCollectionRef.path, currentDeletingId);
-                await deleteDoc(docRef);
-                showMessage("Funcionário apagado com sucesso!", false);
-                // O onSnapshot vai atualizar a lista automaticamente
-            } catch (error) {
-                console.error("Erro ao apagar:", error);
-                showMessage("Erro ao apagar: " + error.message, true);
-            } finally {
-                currentDeletingId = null;
-                confirmModal.style.display = 'none';
-                btn.disabled = false;
-                btn.textContent = "Apagar";
+        // NOVO: Listener para o seletor FAP/ASO
+        regTipoDocumento.addEventListener('input', () => {
+            const tipo = regTipoDocumento.value;
+            if (tipo === 'FAP') {
+                fapInputWrapper.style.display = 'block';
+                asoInputWrapper.style.display = 'none';
+                regDataEmissaoFap.required = true;
+                regDataEmissaoAso.required = false;
+            } else { // ASO
+                fapInputWrapper.style.display = 'none';
+                asoInputWrapper.style.display = 'block';
+                regDataEmissaoFap.required = false;
+                regDataEmissaoAso.required = true;
             }
         });
 
-        // Confirmação (Cancelar) do modal de apagar
-        document.getElementById('confirm-modal-cancel-btn').addEventListener('click', () => {
-            currentDeletingId = null;
-            confirmModal.style.display = 'none';
-        });
-
-        // Botão "Voltar" do formulário de edição
-        document.getElementById('back-to-list-btn').addEventListener('click', () => {
+        document.getElementById('add-new-btn').addEventListener('click', () => {
             currentEditingId = null;
+            editFormTitle.textContent = "Cadastrar Funcionário";
             editForm.reset();
+            regTipoDocumento.value = 'FAP'; // Reseta para FAP
+            regTipoDocumento.dispatchEvent(new Event('input')); // Aciona o listener
+            showView('edit-view');
+        });
+        
+        document.getElementById('back-to-list-btn').addEventListener('click', () => {
             showView('list-view');
+            editForm.reset();
+            currentEditingId = null;
         });
 
-        // Salvar (Tanto para Criar como para Editar)
+        function openEditModal(id) {
+            const data = allEmployees.find(emp => emp.id === id);
+            if (!data) {
+                showMessage("Erro: Funcionário não encontrado no cache.", true);
+                return;
+            }
+            
+            currentEditingId = id;
+            editFormTitle.textContent = "Editar Funcionário";
+            
+            // Preenche o formulário
+            document.getElementById('reg-nome').value = data.nomeCompleto;
+            document.getElementById('reg-empresa').value = data.empresa;
+            document.getElementById('reg-unidade').value = data.unidade;
+            document.getElementById('reg-servico').value = data.servico;
+            document.getElementById('reg-solicitante').value = data.solicitante;
+            document.getElementById('reg-tel-solicitante').value = data.telefoneSolicitante;
+            
+            // ATUALIZADO: Preenche FAP/ASO
+            const tipoDoc = data.tipoDocumento || 'FAP'; // 'FAP' como padrão antigo
+            regTipoDocumento.value = tipoDoc;
+            
+            // Limpa os campos de data antes de preencher
+            regDataEmissaoFap.value = '';
+            regDataEmissaoAso.value = '';
+
+            if (tipoDoc === 'FAP') {
+                regDataEmissaoFap.value = data.dataEmissao || '';
+            } else { // ASO
+                regDataEmissaoAso.value = data.dataEmissao || '';
+            }
+            // Aciona o evento para mostrar/esconder o campo correto
+            regTipoDocumento.dispatchEvent(new Event('input'));
+
+            showView('edit-view');
+        }
+
         editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('save-register-btn');
             btn.disabled = true;
-            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Salvando...</span>`;
+            btn.textContent = "Salvando...";
+            
+            // ATUALIZADO: Lógica de data
+            const tipoDocumento = regTipoDocumento.value;
+            let dataEmissao, diasValidade;
+
+            if (tipoDocumento === 'FAP') {
+                dataEmissao = regDataEmissaoFap.value;
+                diasValidade = 90; // NOVO: 90 dias
+            } else { // ASO
+                dataEmissao = regDataEmissaoAso.value;
+                diasValidade = 365; // NOVO: 365 dias
+            }
+            
+            // Calcula data limite
+            const dataEmissaoObj = new Date(dataEmissao + "T00:00:00");
+            dataEmissaoObj.setDate(dataEmissaoObj.getDate() + diasValidade);
+            const dataLimiteString = dataEmissaoObj.toISOString().split('T')[0];
+            
+            const nome = document.getElementById('reg-nome').value;
+            const nomeLower = nome.trim().toLowerCase();
+
+            // ATUALIZADO: Objeto de dados
+            const dataToSave = {
+                nomeCompleto: nome.trim(),
+                nomeCompletoLower: nomeLower,
+                empresa: document.getElementById('reg-empresa').value,
+                unidade: document.getElementById('reg-unidade').value,
+                servico: document.getElementById('reg-servico').value,
+                solicitante: document.getElementById('reg-solicitante').value,
+                telefoneSolicitante: document.getElementById('reg-tel-solicitante').value,
+                
+                tipoDocumento: tipoDocumento, // NOVO
+                dataEmissao: dataEmissao,     // NOVO
+                dataLimite: dataLimiteString, // NOVO
+            };
 
             try {
-                const nome = document.getElementById('reg-nome').value;
-                const nomeLower = nome.trim().toLowerCase();
-                
-                // --- Verificação de Duplicidade (APENAS AO CRIAR) ---
-                if (!currentEditingId) {
-                    // Checa no array local primeiro
-                    const existe = allEmployees.find(emp => emp.nomeCompletoLower === nomeLower);
-                    if (existe) {
-                        showMessage(`Erro: O funcionário "${nome}" já está cadastrado.`, true);
-                        // Precisa reabilitar o botão antes de sair
-                        btn.disabled = false;
-                        btn.innerHTML = `<span>Salvar</span>`;
-                        return; // Para a execução
+                if (currentEditingId) {
+                    // --- ATUALIZANDO ---
+                    const docRef = doc(db, funcionariosCollectionRef.path, currentEditingId);
+                    await updateDoc(docRef, dataToSave);
+                    showMessage("Funcionário atualizado com sucesso!", false);
+                } else {
+                    // --- CRIANDO NOVO ---
+                    const q = query(funcionariosCollectionRef, where("nomeCompletoLower", "==", nomeLower));
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (!querySnapshot.empty) {
+                        showMessage("Erro: Um funcionário com este nome já existe.", true);
+                    } else {
+                        // Garante que a fotoUrl seja null ao criar
+                        dataToSave.fotoUrl = null;
+                        await addDoc(funcionariosCollectionRef, dataToSave);
+                        showMessage("Funcionário cadastrado com sucesso!", false);
                     }
                 }
                 
-                const dataEmissaoFAP = document.getElementById('reg-data-emissao-fap').value;
-                const dataEmissao = new Date(dataEmissaoFAP + "T00:00:00"); 
-                dataEmissao.setDate(dataEmissao.getDate() + 60);
-                const dataLimiteFAP = dataEmissao.toISOString().split('T')[0];
-
-                const dadosFuncionario = {
-                    nomeCompleto: nome.trim(),
-                    nomeCompletoLower: nomeLower,
-                    empresa: document.getElementById('reg-empresa').value,
-                    unidade: document.getElementById('reg-unidade').value,
-                    servico: document.getElementById('reg-servico').value,
-                    dataInicioServico: document.getElementById('reg-data-inicio').value,
-                    dataEmissaoFAP: dataEmissaoFAP,
-                    dataLimiteFAP: dataLimiteFAP,
-                    solicitante: document.getElementById('reg-solicitante').value,
-                    telefoneSolicitante: document.getElementById('reg-tel-solicitante').value,
-                    updatedAt: Timestamp.now()
-                };
-
-                if (currentEditingId) {
-                    // --- EDITANDO (Update) ---
-                    const docRef = doc(db, funcionariosCollectionRef.path, currentEditingId);
-                    // Pega fotoUrl existente para não sobrescrever
-                    const docLocal = allEmployees.find(emp => emp.id === currentEditingId);
-                    dadosFuncionario.fotoUrl = docLocal.fotoUrl || null; 
-                    
-                    await updateDoc(docRef, dadosFuncionario);
-                    showMessage("Funcionário atualizado com sucesso!", false);
-                } else {
-                    // --- CRIANDO (Add) ---
-                    dadosFuncionario.createdAt = Timestamp.now();
-                    dadosFuncionario.fotoUrl = null; // Garante que começa nulo
-                    await addDoc(funcionariosCollectionRef, dadosFuncionario);
-                    showMessage("Funcionário cadastrado com sucesso!", false);
-                }
-
+                showView('list-view');
                 editForm.reset();
                 currentEditingId = null;
-                showView('list-view'); // Volta para a lista
 
             } catch (error) {
                 console.error("Erro ao salvar:", error);
                 showMessage("Erro ao salvar: " + error.message, true);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<span>Salvar</span>`;
+                btn.textContent = "Salvar";
+            }
+        });
+
+        // --- Lógica de Exclusão (Modal) ---
+
+        function openConfirmModal(id) {
+            currentDeletingId = id;
+            const data = allEmployees.find(emp => emp.id === id);
+            const modalText = document.getElementById('confirm-modal-text');
+            if (data) {
+                modalText.textContent = `Tem certeza que deseja apagar "${data.nomeCompleto}"? Esta ação não pode ser desfeita.`;
+            }
+            confirmModal.style.display = 'flex';
+        }
+        
+        document.getElementById('confirm-modal-cancel-btn').addEventListener('click', () => {
+            currentDeletingId = null;
+            confirmModal.style.display = 'none';
+        });
+
+        document.getElementById('confirm-modal-delete-btn').addEventListener('click', async () => {
+            if (!currentDeletingId) return;
+            const btn = document.getElementById('confirm-modal-delete-btn');
+            btn.disabled = true;
+            btn.textContent = "Apagando...";
+            try {
+                const docRef = doc(db, funcionariosCollectionRef.path, currentDeletingId);
+                await deleteDoc(docRef);
+                showMessage("Funcionário apagado com sucesso.", false);
+            } catch (error) {
+                console.error("Erro ao apagar:", error);
+                showMessage("Erro ao apagar: " + error.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Apagar";
+                confirmModal.style.display = 'none';
+                currentDeletingId = null;
             }
         });
 
