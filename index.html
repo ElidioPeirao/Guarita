@@ -105,23 +105,21 @@
                             <p id="profile-servico" class="text-lg font-semibold text-gray-900"></p>
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <label class="block text-xs font-medium text-gray-500">Data Início Serviço</label>
-                        <p id="profile-data-inicio" class="text-lg font-semibold text-gray-900"></p>
-                    </div>
                     
-                    <!-- Datas FAP -->
+                    <!-- Datas Documento -->
                     <div id="profile-fap-warning-box" class="hidden bg-red-100 p-4 rounded-xl border border-red-300 text-red-800 font-medium text-center">
                         <p id="profile-fap-warning-text"></p>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <label class="block text-xs font-medium text-gray-500">Emissão FAP</label>
+                            <!-- ATUALIZADO -->
+                            <label class="block text-xs font-medium text-gray-500">Documento (Emissão)</label>
                             <p id="profile-data-emissao" class="text-lg font-semibold text-gray-900"></p>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <label class="block text-xs font-medium text-gray-500">Limite FAP (60 dias)</label>
+                            <!-- ATUALIZADO -->
+                            <label class="block text-xs font-medium text-gray-500">Validade Documento</label>
                             <p id="profile-data-limite" class="text-lg font-semibold text-gray-900"></p>
                         </div>
                     </div>
@@ -137,7 +135,6 @@
         <!-- 4. Tela da Câmera -->
         <div id="camera-view" class="view p-6 md:p-8 bg-gray-800">
             <h1 class="text-2xl font-bold text-white text-center mb-4">Capturar Foto</h1>
-            <!-- O elemento <video> precisa de 'playsinline' para funcionar em iPhones -->
             <video id="camera-video" class="w-full rounded-xl" autoplay muted playsinline></video>
             
             <button id="capture-photo-btn" class="w-full mt-4 bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-green-700 transition duration-300">
@@ -152,10 +149,8 @@
                 Cancelar
             </button>
             
-            <!-- Canvas fica escondido, é usado para processar a imagem -->
             <canvas id="camera-canvas" class="hidden"></canvas>
         </div>
-
 
         <!-- 5. Caixa de Mensagem (Toast) -->
         <div id="message-box" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg text-white" style="display: none; z-index: 100;">
@@ -182,7 +177,6 @@
             onSnapshot, 
             query, 
             where,
-            getDocs, // Removido 'getDocs' pois não vamos mais usar query de busca
             setLogLevel
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { 
@@ -209,75 +203,59 @@
         let userId = null;
         let funcionariosCollectionRef;
         let searchDebounceTimer;
-        let currentEmployeeId = null; // ID do funcionário sendo visto/fotografado
+        let currentEmployeeId = null;
         
-        // NOVO: Cache local de funcionários
         let allEmployees = [];
         let unsubscribeFromList = null;
         
-        // --- Variáveis da Câmera ---
         const videoElement = document.getElementById('camera-video');
         const canvasElement = document.getElementById('camera-canvas');
-        let videoStream; // Para guardar o stream da câmera
-        let currentFacingMode = 'environment'; // 'environment' = traseira, 'user' = frontal
+        let videoStream;
+        let currentFacingMode = 'environment';
         
-        // --- Elementos do DOM ---
         const views = document.querySelectorAll('.view');
         const searchInput = document.getElementById('search-input');
         const searchResults = document.getElementById('search-results');
         
         // --- Funções Auxiliares ---
 
-        /**
-         * Exibe uma tela (view) e esconde as outras.
-         */
         function showView(viewId) {
              views.forEach(view => {
                 view.style.display = 'none';
             });
             const viewToShow = document.getElementById(viewId);
             if (viewToShow) {
-                viewToShow.style.display = 'block';
+                // loading-view é 'flex', outros são 'block'
+                viewToShow.style.display = (viewId === 'loading-view') ? 'flex' : 'block';
             } else {
                 console.error("View não encontrada:", viewId);
             }
         }
 
-        /**
-         * Exibe uma mensagem flutuante (toast).
-         */
         function showMessage(message, isError = false) {
             const messageBox = document.getElementById('message-box');
             const messageText = document.getElementById('message-text');
-            
             messageText.textContent = message;
-            messageBox.className = 'fixed bottom-4 right-4 p-4 rounded-xl shadow-lg text-white'; // Reseta classes
+            messageBox.className = 'fixed bottom-4 right-4 p-4 rounded-xl shadow-lg text-white';
             messageBox.classList.add(isError ? 'bg-red-600' : 'bg-green-600');
-            
             messageBox.style.display = 'block';
             setTimeout(() => {
                 messageBox.style.display = 'none';
             }, 3000);
         }
 
-        /**
-         * Formata data de YYYY-MM-DD para DD/MM/YYYY
-         */
         function formatarData(dataStr) {
             if (!dataStr) return 'N/A';
             try {
                 const [ano, mes, dia] = dataStr.split('-');
                 return `${dia}/${mes}/${ano}`;
             } catch (e) {
-                return dataStr; // Retorna original se falhar
+                return dataStr;
             }
         }
 
         // --- Lógica Principal da Aplicação ---
 
-        /**
-         * Inicializa o Firebase e a autenticação.
-         */
         async function initializeAppLogic() {
             try {
                 app = initializeApp(firebaseConfig);
@@ -286,31 +264,25 @@
                 storage = getStorage(app);
                 setLogLevel('Debug'); 
 
-                // Gerencia o estado da autenticação
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
                         console.log("Usuário autenticado:", userId);
                         
-                        // Caminho da coleção (NÃO PÚBLICO)
                         const collectionPath = `funcionarios_terceirizados`;
                         console.log(`Usando coleção: ${collectionPath}`);
                         funcionariosCollectionRef = collection(db, collectionPath);
                         
                         document.getElementById('auth-status').textContent = "Carregando dados...";
                         
-                        // **NOVA LÓGICA:** Carrega todos os funcionários
                         loadAllEmployees(); 
-                        
-                        showView('search-view'); // Mostra a tela de busca
+                        showView('search-view');
 
                     } else {
-                        // Se não estiver logado, tenta login anônimo
                         console.log("Nenhum usuário. Tentando login anônimo...");
                         document.getElementById('auth-status').textContent = "Autenticando...";
                         try {
                             await signInAnonymously(auth);
-                            // onAuthStateChanged será chamado novamente
                         } catch (error) {
                             console.error("Erro no login anônimo:", error);
                             document.getElementById('auth-status').textContent = "Falha na autenticação.";
@@ -326,25 +298,18 @@
             }
         }
         
-        /**
-         * NOVO: Carrega todos os funcionários para o cache local (allEmployees)
-         */
         function loadAllEmployees() {
-            if (unsubscribeFromList) {
-                unsubscribeFromList(); // Para o listener antigo se houver
-            }
+            if (unsubscribeFromList) unsubscribeFromList();
             
-            // Ouve a coleção inteira em tempo real
             unsubscribeFromList = onSnapshot(funcionariosCollectionRef, (querySnapshot) => {
-                allEmployees = []; // Limpa o cache
+                allEmployees = [];
                 querySnapshot.docs.forEach(doc => {
                     allEmployees.push({ id: doc.id, ...doc.data() });
                 });
                 
                 console.log(`Carregados ${allEmployees.length} funcionários no cache local.`);
-                document.getElementById('auth-status').textContent = "Conectado"; // Atualiza status
+                document.getElementById('auth-status').textContent = "Conectado";
                 
-                // Se o usuário já estava digitando, atualiza a busca
                 const searchTerm = searchInput.value.trim().toLowerCase();
                 if (searchTerm.length > 1) {
                     performSearch(searchTerm);
@@ -352,24 +317,18 @@
 
             }, (error) => {
                 console.error("Erro ao carregar funcionários (onSnapshot):", error);
-                // Este é o erro de permissão!
                 showMessage("Erro ao carregar dados. Verifique as Regras de Segurança do Firestore.", true);
                 document.getElementById('auth-status').textContent = "Erro de permissão.";
             });
         }
 
-
-        // --- Lógica de Busca (MODIFICADA) ---
+        // --- Lógica de Busca ---
 
         searchInput.addEventListener('input', () => {
-            // Não usa mais 'debounce' pois a busca local é instantânea
             const searchTerm = searchInput.value.trim().toLowerCase();
             performSearch(searchTerm);
         });
 
-        /**
-         * MODIFICADO: Busca no array local 'allEmployees'
-         */
         function performSearch(searchTerm) {
             if (searchTerm.length < 2) {
                 searchResults.innerHTML = '<p class="text-gray-500 text-center p-4">Digite ao menos 2 letras.</p>';
@@ -381,7 +340,6 @@
                 return;
             }
 
-            // Filtra o array local
             const filtered = allEmployees.filter(emp => 
                 emp.nomeCompletoLower && emp.nomeCompletoLower.includes(searchTerm)
             );
@@ -391,7 +349,7 @@
                 return;
             }
 
-            searchResults.innerHTML = ''; // Limpa os resultados antigos
+            searchResults.innerHTML = '';
             
             filtered.forEach(data => {
                 const el = document.createElement('div');
@@ -400,13 +358,12 @@
                     <h3 class="text-lg font-semibold text-indigo-700">${data.nomeCompleto}</h3>
                     <p class="text-gray-600">${data.empresa}</p>
                 `;
-                // MODIFICAÇÃO: Passa o objeto 'data' inteiro
                 el.addEventListener('click', () => showProfile(data));
                 searchResults.appendChild(el);
             });
         }
         
-        // --- Lógica de Perfil (MODIFICADA) ---
+        // --- Lógica de Perfil ---
         
         document.getElementById('back-to-search-btn').addEventListener('click', () => {
             searchInput.value = '';
@@ -414,22 +371,20 @@
             showView('search-view');
         });
 
-        /**
-         * MODIFICADO: Recebe o objeto 'data' do array local, não faz busca no DB
-         */
         function showProfile(data) {
-            currentEmployeeId = data.id; // Salva o ID do funcionário atual
+            currentEmployeeId = data.id;
             
             try {
-                // Preenche os dados diretamente do objeto
                 document.getElementById('profile-nome').textContent = data.nomeCompleto || 'N/A';
                 document.getElementById('profile-empresa').textContent = data.empresa || 'N/A';
                 document.getElementById('profile-unidade').textContent = data.unidade || 'N/A';
                 document.getElementById('profile-servico').textContent = data.servico || 'N/A';
-                document.getElementById('profile-data-inicio').textContent = formatarData(data.dataInicioServico);
-                document.getElementById('profile-data-emissao').textContent = formatarData(data.dataEmissaoFAP);
-                document.getElementById('profile-data-limite').textContent = formatarData(data.dataLimiteFAP);
                 document.getElementById('profile-solicitante').textContent = `${data.solicitante || 'N/A'} / ${data.telefoneSolicitante || 'N/A'}`;
+
+                // ATUALIZADO: Lógica de Documento
+                const tipoDoc = data.tipoDocumento || 'FAP'; // Padrão FAP para registros antigos
+                document.getElementById('profile-data-emissao').textContent = `${tipoDoc} (${formatarData(data.dataEmissao)})`;
+                document.getElementById('profile-data-limite').textContent = formatarData(data.dataLimite);
                 
                 // Atualiza a foto
                 const photoStatusText = document.getElementById('photo-status-text');
@@ -444,50 +399,46 @@
                     photoStatusText.className = "text-sm text-red-600 mt-2";
                 }
 
-                // Lógica de Status (Autorizado/Não Autorizado)
+                // ATUALIZADO: Lógica de Status (Autorizado/Não Autorizado)
                 const banner = document.getElementById('profile-status-banner');
                 const fapWarningBox = document.getElementById('profile-fap-warning-box');
                 const fapWarningText = document.getElementById('profile-fap-warning-text');
-                fapWarningBox.style.display = 'none'; // Reseta o aviso
+                fapWarningBox.style.display = 'none';
                 
                 let autorizado = true;
                 let mensagem = "";
-                let fapVencida = false;
+                let docVencido = false;
 
-                if (!data.dataLimiteFAP) {
+                if (!data.dataLimite) {
                     autorizado = false;
-                    mensagem = "Cadastro incompleto (FAP não registrada).";
+                    mensagem = "Cadastro incompleto (Documento não registrado).";
                 } else {
                     const hoje = new Date();
-                    hoje.setHours(0, 0, 0, 0); // Zera a hora para comparar só a data
-                    
-                    const dataLimite = new Date(data.dataLimiteFAP + "T00:00:00");
+                    hoje.setHours(0, 0, 0, 0);
+                    const dataLimite = new Date(data.dataLimite + "T00:00:00");
                     
                     if (dataLimite < hoje) {
                         autorizado = false;
-                        mensagem = "FAP Vencida.";
-                        fapVencida = true;
+                        mensagem = `${tipoDoc} Vencido.`;
+                        docVencido = true;
                     }
                 }
 
                 if (autorizado) {
-                    // AUTORIZADO
                     banner.className = 'rounded-xl p-6 mb-6 text-center shadow-lg bg-green-100 text-green-800';
                     banner.innerHTML = `
                         <svg class="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <h2 class="text-3xl font-bold">AUTORIZADO</h2>
                     `;
                 } else {
-                    // NÃO AUTORIZADO
                     banner.className = 'rounded-xl p-6 mb-6 text-center shadow-lg bg-red-100 text-red-800';
                     banner.innerHTML = `
                         <svg class="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <h2 class="text-3xl font-bold">NÃO AUTORIZADO</h2>
                         <p class="text-lg font-medium mt-1">${mensagem}</p>
                     `;
-                    // Mostra aviso extra perto da data da FAP
-                    if (fapVencida) {
-                        fapWarningText.textContent = "FAP VENCIDA";
+                    if (docVencido) {
+                        fapWarningText.textContent = `${tipoDoc} VENCIDO`;
                         fapWarningBox.style.display = 'block';
                     }
                 }
@@ -500,27 +451,25 @@
             }
         }
         
-        // --- Lógica da Câmera (Sem alterações) ---
+        // --- Lógica da Câmera (Sem alterações de lógica, apenas IDs) ---
 
-        // Função para PARAR o stream da câmera
         function stopCameraStream() {
             if (videoStream) {
                 videoStream.getTracks().forEach(track => {
-                    track.stop(); // Para a trilha (desliga a luz da câmera)
+                    track.stop();
                 });
                 videoStream = null;
-                videoElement.srcObject = null; // Limpa o elemento de vídeo
+                videoElement.srcObject = null;
                 console.log("Stream da câmera parado.");
             }
         }
 
-        // Função para INICIAR o stream da câmera
         async function startCameraStream(facingMode) {
-            stopCameraStream(); // Para qualquer stream anterior
+            stopCameraStream();
             
             const constraints = {
                 video: { 
-                    facingMode: { exact: facingMode }, // 'exact' força o modo
+                    facingMode: { exact: facingMode },
                     width: { ideal: 1280 },
                     height: { ideal: 720 }
                 },
@@ -531,25 +480,22 @@
                 console.log(`Tentando iniciar câmera com facingMode: ${facingMode}`);
                 videoStream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = videoStream;
-                await videoElement.play(); // Espera o play
+                await videoElement.play();
                 console.log("Câmera iniciada.");
             } catch (err) {
                 console.error("Erro ao acessar a câmera: ", err);
-                
-                // Se falhou com 'exact', tenta sem (plano B)
                 if (err.name === 'OverconstrainedError' && facingMode === 'environment') {
                     console.warn("Câmera traseira falhou, tentando câmera frontal...");
-                    currentFacingMode = 'user'; // Muda para o modo 'user'
-                    await startCameraStream('user'); // Tenta recursivamente com o outro modo
+                    currentFacingMode = 'user';
+                    await startCameraStream('user');
                 } else {
                      showMessage(`Erro ao acessar câmera (${err.name}). Verifique permissões.`, true);
-                     stopCameraStream(); // Garante que tudo pare
-                     showView('profile-view'); // Volta ao perfil
+                     stopCameraStream();
+                     showView('profile-view');
                 }
             }
         }
         
-        // Botão "Tirar Foto" (do Perfil) - Abre a câmera
         document.getElementById('profile-take-photo-btn').addEventListener('click', () => {
             if (!currentEmployeeId) {
                 showMessage("Erro: ID do funcionário não encontrado.", true);
@@ -559,19 +505,16 @@
             startCameraStream(currentFacingMode); 
         });
 
-        // Botão "Cancelar" (da Câmera)
         document.getElementById('cancel-camera-btn').addEventListener('click', () => {
-            stopCameraStream(); // Para o stream
+            stopCameraStream();
             showView('profile-view');
         });
         
-        // Botão "Inverter Câmera"
         document.getElementById('flip-camera-btn').addEventListener('click', () => {
             currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
             startCameraStream(currentFacingMode);
         });
 
-        // Botão "Bater Foto" (da Câmera)
         document.getElementById('capture-photo-btn').addEventListener('click', () => {
             const context = canvasElement.getContext('2d');
             canvasElement.width = videoElement.videoWidth;
@@ -582,18 +525,16 @@
             savePhoto(photoDataUrl);
         });
 
-        // Função para salvar a foto no Firebase
         async function savePhoto(dataUrl) {
             if (!currentEmployeeId) {
                 showMessage("Erro fatal: ID do funcionário perdido.", true);
                 return;
             }
 
-            const btn = document.getElementById('capture-photo-btn');
+            const btn = document.getElementById('capture-photo-btn'); // Botão de captura
+            const originalText = btn.textContent;
             btn.disabled = true;
             btn.textContent = "Salvando...";
-            
-            let downloadURL = null; // Para guardar a URL
             
             try {
                 const storagePath = `fotos_funcionarios/${currentEmployeeId}.jpg`;
@@ -602,7 +543,7 @@
                 const uploadResult = await uploadString(storageRef, dataUrl, 'data_url');
                 console.log("Foto enviada:", uploadResult);
 
-                downloadURL = await getDownloadURL(uploadResult.ref);
+                const downloadURL = await getDownloadURL(uploadResult.ref);
                 
                 const docRef = doc(db, funcionariosCollectionRef.path, currentEmployeeId);
                 await updateDoc(docRef, {
@@ -611,22 +552,21 @@
 
                 showMessage("Foto salva com sucesso!", false);
                 
-                // MODIFICADO: Atualiza o perfil localmente
                 const updatedEmployeeData = allEmployees.find(emp => emp.id === currentEmployeeId);
                 if (updatedEmployeeData) {
-                    updatedEmployeeData.fotoUrl = downloadURL; // Atualiza a URL da foto no cache
-                    showProfile(updatedEmployeeData); // Mostra o perfil com os dados atualizados
+                    updatedEmployeeData.fotoUrl = downloadURL;
+                    showProfile(updatedEmployeeData);
                 } else {
-                    showView('search-view'); // Fallback
+                    showView('search-view');
                 }
 
             } catch (error) {
                 console.error("Erro ao salvar foto:", error);
                 showMessage("Erro ao salvar foto: " + error.message, true);
-                showView('profile-view'); // Volta ao perfil mesmo se der erro
+                showView('profile-view');
             } finally {
                 btn.disabled = false;
-                btn.textContent = "Bater Foto";
+                btn.textContent = originalText; // Volta ao texto original
             }
         }
 
@@ -635,5 +575,3 @@
 
     </script></body>
 </html>
-
-
