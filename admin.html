@@ -130,7 +130,7 @@
                     <div>
                         <label for="reg-tipo-documento" class="block text-sm font-medium text-gray-700">Tipo de Documento</label>
                         <select id="reg-tipo-documento" class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
-                            <option value="FAP">FAP (Validade 90 dias)</option>
+                            <option value="FAP">FAP (Validade 60 dias)</option>
                             <option value="ASO">ASO (Validade 365 dias)</option>
                         </select>
                     </div>
@@ -597,7 +597,7 @@
 
             if (tipoDocumento === 'FAP') {
                 dataEmissao = regDataEmissaoFap.value;
-                diasValidade = 90; // NOVO: 90 dias
+                diasValidade = 60; // CORRIGIDO: 60 dias
             } else { // ASO
                 dataEmissao = regDataEmissaoAso.value;
                 diasValidade = 365; // NOVO: 365 dias
