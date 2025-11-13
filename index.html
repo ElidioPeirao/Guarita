@@ -95,15 +95,18 @@
                         <label class="block text-xs font-medium text-gray-500">Empresa (Terceirizada)</label>
                         <p id="profile-empresa" class="text-lg font-semibold text-gray-900"></p>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <label class="block text-xs font-medium text-gray-500">Unidade</label>
-                            <p id="profile-unidade" class="text-lg font-semibold text-gray-900"></p>
+                    
+                    <!-- MUDANÇA: Exibição de Serviços Múltiplos -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="block text-xs font-medium text-gray-500 mb-2">Serviços</label>
+                        <div id="profile-servico-container" class="flex flex-wrap gap-2">
+                            <!-- Tags de serviço serão injetadas aqui -->
                         </div>
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <label class="block text-xs font-medium text-gray-500">Serviço</label>
-                            <p id="profile-servico" class="text-lg font-semibold text-gray-900"></p>
-                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="block text-xs font-medium text-gray-500">Unidade</label>
+                        <p id="profile-unidade" class="text-lg font-semibold text-gray-900"></p>
                     </div>
                     
                     <!-- Datas Documento -->
@@ -113,12 +116,10 @@
                     
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <!-- ATUALIZADO -->
                             <label class="block text-xs font-medium text-gray-500">Documento (Emissão)</label>
                             <p id="profile-data-emissao" class="text-lg font-semibold text-gray-900"></p>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <!-- ATUALIZADO -->
                             <label class="block text-xs font-medium text-gray-500">Validade Documento</label>
                             <p id="profile-data-limite" class="text-lg font-semibold text-gray-900"></p>
                         </div>
@@ -378,10 +379,32 @@
                 document.getElementById('profile-nome').textContent = data.nomeCompleto || 'N/A';
                 document.getElementById('profile-empresa').textContent = data.empresa || 'N/A';
                 document.getElementById('profile-unidade').textContent = data.unidade || 'N/A';
-                document.getElementById('profile-servico').textContent = data.servico || 'N/A';
                 document.getElementById('profile-solicitante').textContent = `${data.solicitante || 'N/A'} / ${data.telefoneSolicitante || 'N/A'}`;
 
-                // ATUALIZADO: Lógica de Documento
+                // MUDANÇA: Exibe múltiplos serviços
+                const servicoContainer = document.getElementById('profile-servico-container');
+                servicoContainer.innerHTML = ''; // Limpa
+                
+                // data.servicos (novo) ou data.servico (antigo)
+                const servicos = data.servicos || (data.servico ? [data.servico] : []);
+
+                if (servicos.length > 0) {
+                    servicos.forEach(s => {
+                        const el = document.createElement('span');
+                        el.textContent = s;
+                        // Estilo de "tag"
+                        el.className = 'inline-block bg-indigo-100 text-indigo-800 text-base font-semibold px-3 py-1 rounded-full';
+                        servicoContainer.appendChild(el);
+                    });
+                } else {
+                    const p = document.createElement('p');
+                    p.textContent = 'N/A';
+                    p.className = 'text-lg font-semibold text-gray-900';
+                    servicoContainer.appendChild(p);
+                }
+
+
+                // Lógica de Documento (FAP/ASO)
                 const tipoDoc = data.tipoDocumento || 'FAP'; // Padrão FAP para registros antigos
                 document.getElementById('profile-data-emissao').textContent = `${tipoDoc} (${formatarData(data.dataEmissao)})`;
                 document.getElementById('profile-data-limite').textContent = formatarData(data.dataLimite);
@@ -399,7 +422,7 @@
                     photoStatusText.className = "text-sm text-red-600 mt-2";
                 }
 
-                // ATUALIZADO: Lógica de Status (Autorizado/Não Autorizado)
+                // Lógica de Status (Autorizado/Não Autorizado)
                 const banner = document.getElementById('profile-status-banner');
                 const fapWarningBox = document.getElementById('profile-fap-warning-box');
                 const fapWarningText = document.getElementById('profile-fap-warning-text');
@@ -451,7 +474,7 @@
             }
         }
         
-        // --- Lógica da Câmera (Sem alterações de lógica, apenas IDs) ---
+        // --- Lógica da Câmera ---
 
         function stopCameraStream() {
             if (videoStream) {
