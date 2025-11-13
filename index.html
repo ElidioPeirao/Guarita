@@ -23,7 +23,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-900 font-sans antialiased flex items-center justify-center min-h-screen p-4">
+<body class="bg-slate-100 font-sans antialiased flex items-center justify-center min-h-screen p-4">
 
     <!-- Container Principal - "cartão" centralizado -->
     <div class="container mx-auto max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden">
@@ -55,7 +55,7 @@
             </div>
             
             <div id="search-results" class="space-y-2 max-h-80 overflow-y-auto">
-                <!-- Resultados da busca aparecem aqui -->
+                <p class="text-gray-500 text-center p-4">Digite ao menos 2 letras para buscar.</p>
             </div>
         </div>
 
@@ -96,18 +96,15 @@
                         <p id="profile-empresa" class="text-lg font-semibold text-gray-900"></p>
                     </div>
                     
-                    <!-- MUDANÇA: Exibição de Serviços Múltiplos -->
+                    <!-- MUDANÇA: Exibição de Serviços Múltiplos com Unidade -->
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <label class="block text-xs font-medium text-gray-500 mb-2">Serviços</label>
+                        <label class="block text-xs font-medium text-gray-500 mb-2">Serviços e Unidades</label>
                         <div id="profile-servico-container" class="flex flex-wrap gap-2">
-                            <!-- Tags de serviço serão injetadas aqui -->
+                            <!-- Tags de serviço/unidade serão injetadas aqui -->
                         </div>
                     </div>
                     
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <label class="block text-xs font-medium text-gray-500">Unidade</label>
-                        <p id="profile-unidade" class="text-lg font-semibold text-gray-900"></p>
-                    </div>
+                    <!-- MUDANÇA: Campo de Unidade Única Removido -->
                     
                     <!-- Datas Documento -->
                     <div id="profile-fap-warning-box" class="hidden bg-red-100 p-4 rounded-xl border border-red-300 text-red-800 font-medium text-center">
@@ -203,7 +200,6 @@
         let app, auth, db, storage;
         let userId = null;
         let funcionariosCollectionRef;
-        let searchDebounceTimer;
         let currentEmployeeId = null;
         
         let allEmployees = [];
@@ -378,20 +374,23 @@
             try {
                 document.getElementById('profile-nome').textContent = data.nomeCompleto || 'N/A';
                 document.getElementById('profile-empresa').textContent = data.empresa || 'N/A';
-                document.getElementById('profile-unidade').textContent = data.unidade || 'N/A';
                 document.getElementById('profile-solicitante').textContent = `${data.solicitante || 'N/A'} / ${data.telefoneSolicitante || 'N/A'}`;
 
-                // MUDANÇA: Exibe múltiplos serviços
+                // MUDANÇA: Exibe múltiplos serviços e unidades
                 const servicoContainer = document.getElementById('profile-servico-container');
                 servicoContainer.innerHTML = ''; // Limpa
                 
-                // data.servicos (novo) ou data.servico (antigo)
-                const servicos = data.servicos || (data.servico ? [data.servico] : []);
+                const servicos = data.servicos || [];
+                // Fallback para dados antigos
+                if (servicos.length === 0 && data.servico && data.unidade) {
+                    servicos.push({ nome: data.servico, unidade: data.unidade });
+                }
 
                 if (servicos.length > 0) {
                     servicos.forEach(s => {
                         const el = document.createElement('span');
-                        el.textContent = s;
+                        // Mostra NOME (UNIDADE)
+                        el.textContent = `${s.nome || 'N/A'} (${s.unidade || 'N/A'})`;
                         // Estilo de "tag"
                         el.className = 'inline-block bg-indigo-100 text-indigo-800 text-base font-semibold px-3 py-1 rounded-full';
                         servicoContainer.appendChild(el);
@@ -507,12 +506,20 @@
                 console.log("Câmera iniciada.");
             } catch (err) {
                 console.error("Erro ao acessar a câmera: ", err);
-                if (err.name === 'OverconstrainedError' && facingMode === 'environment') {
-                    console.warn("Câmera traseira falhou, tentando câmera frontal...");
-                    currentFacingMode = 'user';
-                    await startCameraStream('user');
+                // Se falhar (ex: PC sem câmera traseira), tenta a outra.
+                if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError' || err.name === 'NotAllowedError' || err.name === 'Source/sink not found') {
+                    if (facingMode === 'environment') {
+                        console.warn("Câmera traseira falhou, tentando câmera frontal...");
+                        currentFacingMode = 'user';
+                        await startCameraStream('user'); // Tenta a frontal
+                    } else {
+                        // Se a frontal falhar, mostra o erro.
+                         showMessage(`Erro ao acessar câmera (${err.name}). Verifique permissões.`, true);
+                         stopCameraStream();
+                         showView('profile-view');
+                    }
                 } else {
-                     showMessage(`Erro ao acessar câmera (${err.name}). Verifique permissões.`, true);
+                     showMessage(`Erro ao acessar câmera (${err.name}).`, true);
                      stopCameraStream();
                      showView('profile-view');
                 }
@@ -578,7 +585,7 @@
                 const updatedEmployeeData = allEmployees.find(emp => emp.id === currentEmployeeId);
                 if (updatedEmployeeData) {
                     updatedEmployeeData.fotoUrl = downloadURL;
-                    showProfile(updatedEmployeeData);
+                    showProfile(updatedEmployeeData); // Recarrega o perfil com a foto
                 } else {
                     showView('search-view');
                 }
