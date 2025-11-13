@@ -69,7 +69,6 @@
                         <button id="export-csv-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
                             Exportar Tudo (CSV)
                         </button>
-                        <!-- BOTÃO DE CORREÇÃO REMOVIDO -->
                         <button id="add-new-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition duration-300">
                             Cadastrar Novo
                         </button>
@@ -118,16 +117,14 @@
                         <label for="reg-empresa" class="block text-sm font-medium text-gray-700">Empresa (Terceirizada)</label>
                         <input type="text" id="reg-empresa" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
-                    <div>
-                        <label for="reg-unidade" class="block text-sm font-medium text-gray-700">Unidade</label>
-                        <input type="text" id="reg-unidade" required class="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
+                    
+                    <!-- MUDANÇA: Campo de Unidade Única Removido -->
 
-                    <!-- MUDANÇA: Campo de Serviço Único para Múltiplos -->
+                    <!-- MUDANÇA: Campo de Serviços Múltiplos com Unidade -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Serviços</label>
-                        <div id="servicos-container" class="space-y-2 mt-1">
-                            <!-- Inputs de serviço serão injetados aqui -->
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Serviços e Unidades</label>
+                        <div id="servicos-container" class="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                            <!-- Inputs de serviço/unidade serão injetados aqui -->
                         </div>
                         <button type="button" id="add-servico-btn" class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-800">+ Adicionar outro serviço</button>
                     </div>
@@ -188,8 +185,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- MODAL DE CORREÇÃO REMOVIDO -->
 
     </div> <!-- Fim do Container Principal -->
 
@@ -252,8 +247,6 @@
         const editForm = document.getElementById('edit-form');
         const editFormTitle = document.getElementById('edit-form-title');
         const confirmModal = document.getElementById('confirm-modal');
-        
-        // Elementos do modal de correção REMOVIDOS
         
         // Elementos de Filtro
         const filterNome = document.getElementById('filter-nome');
@@ -384,9 +377,9 @@
                 return `"${str.replace(/"/g, '""')}"`;
             };
 
-            // MUDANÇA: Cabeçalho "Servico" para "Servicos"
+            // MUDANÇA: Cabeçalho
             const headers = [
-                "ID", "Nome Completo", "Empresa", "Unidade", "Servicos", 
+                "ID", "Nome Completo", "Empresa", "Servicos (Unidades)", 
                 "Tipo Documento", "Data Emissao", "Data Limite", 
                 "Solicitante", "Telefone Solicitante", "Foto URL"
             ];
@@ -394,15 +387,17 @@
             // MUDANÇA: Linhas
             const rows = allEmployees.map(emp => {
                 // Junta a lista de serviços com "; "
-                const servicosStr = (emp.servicos && Array.isArray(emp.servicos)) 
-                                    ? emp.servicos.join('; ') 
-                                    : (emp.servico || ''); // Fallback para dados antigos
+                let servicosStr = '';
+                if (emp.servicos && Array.isArray(emp.servicos)) {
+                    servicosStr = emp.servicos.map(s => `${s.nome || 'N/A'} (${s.unidade || 'N/A'})`).join('; ');
+                } else if (emp.servico && emp.unidade) { // Fallback para dados antigos
+                    servicosStr = `${emp.servico} (${emp.unidade})`;
+                }
 
                 return [
                     emp.id,
                     emp.nomeCompleto,
                     emp.empresa,
-                    emp.unidade,
                     servicosStr, // MUDANÇA
                     emp.tipoDocumento, 
                     emp.dataEmissao,   
@@ -429,9 +424,6 @@
             }
         }
         exportCsvBtn.addEventListener('click', exportToCSV);
-
-
-        // --- Lógica de Correção de FAPs REMOVIDA ---
 
 
         // --- Lógica de CRUD (Listar, Cadastrar, Editar, Apagar) ---
@@ -537,14 +529,15 @@
             renderEmployeeList();
         });
 
-        // --- MUDANÇA: Lógica de Múltiplos Serviços ---
+        // --- MUDANÇA: Lógica de Múltiplos Serviços com Unidade ---
 
-        // Função para adicionar um novo input de serviço (com botão de remover)
-        function addNewServicoInput(value = '') {
+        // Função para adicionar um novo par (serviço/unidade)
+        function addNewServicoInput(servico = { nome: '', unidade: '' }) {
             const div = document.createElement('div');
-            div.className = 'flex items-center space-x-2';
+            div.className = 'servico-item flex items-center space-x-2 p-2 bg-white rounded-lg border';
             div.innerHTML = `
-                <input type="text" value="${value}" class="servico-input mt-1 block w-full border border-gray-300 rounded-xl shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Nome do serviço" required>
+                <input type="text" value="${servico.nome}" class="servico-nome-input block w-1/2 border border-gray-300 rounded-xl shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Nome do serviço" required>
+                <input type="text" value="${servico.unidade}" class="servico-unidade-input block w-1/2 border border-gray-300 rounded-xl shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Unidade do serviço" required>
                 <button type="button" class="remove-servico-btn text-red-500 hover:text-red-700 p-2 rounded-full">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </button>
@@ -558,13 +551,13 @@
             if (servicosArray && Array.isArray(servicosArray) && servicosArray.length > 0) {
                 servicosArray.forEach(s => addNewServicoInput(s));
             } else {
-                addNewServicoInput(''); // Sempre mostra pelo menos um
+                addNewServicoInput(); // Sempre mostra pelo menos um par
             }
         }
 
         // Botão "+ Adicionar outro serviço"
         addServicoBtn.addEventListener('click', () => {
-            addNewServicoInput('');
+            addNewServicoInput();
         });
 
         // Delegação de evento para os botões "remover"
@@ -575,8 +568,10 @@
                 if (servicosContainer.children.length > 1) {
                     removeBtn.parentElement.remove();
                 } else {
-                    // Se for o último, apenas limpa o valor
-                    removeBtn.parentElement.querySelector('.servico-input').value = '';
+                    // Se for o último, apenas limpa os valores
+                    const item = removeBtn.parentElement;
+                    item.querySelector('.servico-nome-input').value = '';
+                    item.querySelector('.servico-unidade-input').value = '';
                 }
             }
         });
@@ -606,7 +601,7 @@
             editForm.reset();
             regTipoDocumento.value = 'FAP'; // Reseta para FAP
             regTipoDocumento.dispatchEvent(new Event('input')); // Aciona o listener
-            renderServicosInputs(null); // MUDANÇA: Renderiza um campo de serviço
+            renderServicosInputs(null); // MUDANÇA: Renderiza um par
             showView('edit-view');
         });
         
@@ -629,13 +624,20 @@
             // Preenche o formulário
             document.getElementById('reg-nome').value = data.nomeCompleto;
             document.getElementById('reg-empresa').value = data.empresa;
-            document.getElementById('reg-unidade').value = data.unidade;
+            // Unidade única removida
             document.getElementById('reg-solicitante').value = data.solicitante;
             document.getElementById('reg-tel-solicitante').value = data.telefoneSolicitante;
             
-            // MUDANÇA: Preenche os serviços
-            // `data.servico` é o fallback para dados antigos
-            renderServicosInputs(data.servicos || (data.servico ? [data.servico] : null));
+            // MUDANÇA: Preenche os serviços e unidades (com suporte a dados antigos)
+            if (data.servicos && Array.isArray(data.servicos)) {
+                // Novo formato (array de objetos)
+                renderServicosInputs(data.servicos);
+            } else if (data.servico && data.unidade) {
+                // Converte dados antigos (string)
+                renderServicosInputs([{ nome: data.servico, unidade: data.unidade }]);
+            } else {
+                renderServicosInputs(null);
+            }
 
             // Preenche FAP/ASO
             const tipoDoc = data.tipoDocumento || 'FAP'; // 'FAP' como padrão antigo
@@ -679,14 +681,17 @@
             const nome = document.getElementById('reg-nome').value;
             const nomeLower = nome.trim().toLowerCase();
 
-            // MUDANÇA: Coleta os serviços
-            const servicosInputs = document.querySelectorAll('#servicos-container .servico-input');
-            const servicosArray = Array.from(servicosInputs)
-                                      .map(input => input.value.trim())
-                                      .filter(s => s.length > 0); // Filtra vazios
+            // MUDANÇA: Coleta os serviços e unidades
+            const servicosInputs = document.querySelectorAll('#servicos-container .servico-item');
+            const servicosArray = Array.from(servicosInputs).map(item => {
+                return {
+                    nome: item.querySelector('.servico-nome-input').value.trim(),
+                    unidade: item.querySelector('.servico-unidade-input').value.trim()
+                };
+            }).filter(s => s.nome.length > 0 && s.unidade.length > 0); // Filtra pares vazios
 
             if (servicosArray.length === 0) {
-                showMessage("Erro: Pelo menos um serviço deve ser informado.", true);
+                showMessage("Erro: Pelo menos um par (Serviço e Unidade) deve ser informado.", true);
                 btn.disabled = false;
                 btn.textContent = "Salvar";
                 return;
@@ -697,7 +702,6 @@
                 nomeCompleto: nome.trim(),
                 nomeCompletoLower: nomeLower,
                 empresa: document.getElementById('reg-empresa').value,
-                unidade: document.getElementById('reg-unidade').value,
                 solicitante: document.getElementById('reg-solicitante').value,
                 telefoneSolicitante: document.getElementById('reg-tel-solicitante').value,
                 
@@ -706,7 +710,8 @@
                 dataLimite: dataLimiteString,
                 
                 servicos: servicosArray, // MUDANÇA
-                // servico: ... (removido)
+                // servico: (removido)
+                // unidade: (removida)
             };
 
             try {
